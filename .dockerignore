@@ -1,0 +1,10 @@
+node_modules
+.next
+.git
+veri
+*.log
+dev-log.txt
+dev-hata.txt
+.env
+.env.local
+Siteyi-Baslat.bat
