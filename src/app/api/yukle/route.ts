@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { dosyayiOku } from "@/lib/excel";
 import { oturumVarMi } from "@/lib/oturum";
-import { istatistik, veriYaz, yedekAl } from "@/lib/veri";
+import { ayarlarOku, istatistik, veriYaz, yedekAl } from "@/lib/veri";
 
 export const dynamic = "force-dynamic";
 
@@ -29,7 +29,14 @@ export async function POST(istek: Request) {
     return NextResponse.json({ hata: "Dosya 25 MB'dan büyük olamaz." }, { status: 413 });
   }
 
-  const sonuc = await dosyayiOku(await dosya.arrayBuffer(), dosya.name);
+  // ERP'den inen stok dosyasinda "Para Birimi" kolonu yoktur; fiyatlarin
+  // hangi birimde oldugu site ayarindan gelir (Shenzhen icin USD).
+  const ayarlar = ayarlarOku();
+  const sonuc = await dosyayiOku(
+    await dosya.arrayBuffer(),
+    dosya.name,
+    ayarlar.varsayilanParaBirimi,
+  );
 
   if (sonuc.hatalar.length || !sonuc.urunler.length) {
     return NextResponse.json(

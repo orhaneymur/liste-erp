@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { Check, LoaderCircle, Save, SlidersHorizontal, TriangleAlert } from "lucide-react";
 import { bekleyenBildirim, yenileVeBildir } from "@/lib/tarayici";
-import type { Ayarlar } from "@/lib/tipler";
+import type { Ayarlar, ParaBirimi } from "@/lib/tipler";
 
 const KAYIT_ANAHTARI = "fl_ayar_kaydedildi";
 
@@ -214,6 +214,20 @@ export function AyarFormu({ ayarlar }: { ayarlar: Ayarlar }) {
       </div>
 
       <div className="mt-4 grid gap-4 sm:grid-cols-3">
+        <Alan
+          etiket="Fiyatların para birimi"
+          ipucu="Excel'de Para Birimi kolonu yoksa bu kabul edilir. ERP dosyası USD'dir."
+        >
+          <select
+            className={girdiSinifi}
+            value={form.varsayilanParaBirimi}
+            onChange={(o) => guncelle("varsayilanParaBirimi", o.target.value as ParaBirimi)}
+          >
+            <option value="USD">USD — Dolar</option>
+            <option value="TRY">TRY — Türk Lirası</option>
+            <option value="EUR">EUR — Euro</option>
+          </select>
+        </Alan>
         <Alan etiket="KDV oranı (%)">
           <input
             type="number"

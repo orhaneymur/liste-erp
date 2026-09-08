@@ -4,7 +4,210 @@ Bu dosya, siteye yüklediğin Excel'in nasıl hazırlanacağını anlatır. Acel
 
 ---
 
-## 1. Doğru çalışma yöntemi
+## 0. ERP kullanıyorsan: ayrı Excel hazırlama
+
+TeknikERP'den indirdiğin **stok Excel'i doğrudan buraya yüklenir.** Kolonları
+değiştirmene, silmene, sıralamana gerek yok — dosyayı olduğu gibi sürükle bırak.
+
+```
+ERP → Stok Listesi → Excel indir   (SM-stoklar-20260908-1030.xlsx)
+        ↓
+Fiyat sitesi → Yönetim paneli → dosyayı sürükle → "Yükle ve yayına al"
+```
+
+Site, ERP'nin kolonlarını şöyle karşılar:
+
+| ERP'deki kolon | Sitede karşılığı |
+|---|---|
+| `Marka` | Marka (1. adım) |
+| `Kategori` | Parça türü (2. adım) |
+| `Model` | Model (3. adım) |
+| `Kalite` + `Gorunum` + `Renk` | Satır adı — "A Kalite · Çıtasız · BLACK" |
+| `Satis1` | **Toptan** fiyat |
+| `Satis2` | **Perakende** fiyat |
+| `StokKodu` | Stok kodu |
+| `Aciklama` | Not |
+
+ERP'nin diğer kolonları (`Rmb`, `AlisFiyati`, `Bakiye`, `AlisAdedi`, `Uyumlu`…)
+**okunmaz.** Alış fiyatın ve maliyetin siteye hiçbir şekilde çıkmaz.
+
+> **Para birimi:** ERP fiyatları USD tutar ve indirdiğin dosyada para birimi kolonu
+> yoktur. Bu yüzden panelde **Site ayarları → "Fiyatların para birimi"** ayarı
+> vardır; ERP kullanıyorsan **USD** olmalı. Yanlış bırakılırsa 32 dolarlık ekran
+> sitede 32 TL görünür.
+
+> **Fiyatı 0 olan ürünler yayına girmez.** ERP'de fiyatı doldurulmamış ürünler 0
+> olarak iner; müşteriye "0 USD" göstermek yerine o satırlar atlanır ve yükleme
+> raporunda tek tek yazılır.
+
+---
+
+## 1. ERP kullanmıyorsan: doğru çalışma yöntemi
+
+```
+Yönetim paneli → "Mevcut listeyi indir"
+        ↓
+Excel'de fiyatları güncelle / yeni satır ekle
+        ↓
+Yönetim paneli → dosyayı sürükle-bırak → "Yükle ve yayına al"
+        ↓
+Site anında güncellendi (müşterinin linki değişmedi)
+```
+
+Hiç listen yoksa **"Boş şablon indir"** ile başla. Şablonun içinde örnek satırlar ve `NASIL DOLDURULUR` adlı bir yardım sayfası vardır. Örnek satırları silip kendi verinle doldur.
+
+> ⚠️ **En kritik kural:** Her yükleme, sitedeki listenin **tamamını** değiştirir. Yüklediğin dosyada olmayan ürün siteden kalkar. Bu yüzden "sadece iPhone" dosyası yükleme; hep tam listeyle çalış.
+>
+> Yanlış dosya yüklersen panik yok: her yüklemeden önce eski liste `veri/yedekler/` klasörüne otomatik yedeklenir.
+
+---
+
+## 2. Kolonlar
+
+Sıra önemli değil, kolon **adı** önemli. Sistem esnektir; aynı anlama gelen yaygın yazımları da tanır.
+
+### Marka — zorunlu
+
+Telefon markası. Aynı markayı hep aynı yaz (bir satırda `Apple`, ötekinde `APPLE` yazarsan ikisi tek marka sayılır ama listede ilk gördüğü yazımla görünür).
+
+```
+Apple / Samsung / Xiaomi / Huawei / Honor / Oppo / Realme / Vivo / Tecno / Infinix
+```
+
+Logolar marka adından otomatik bulunur. `İphone`, `Redmi`, `Galaxy`, `Pixel` gibi yazımlar da doğru logoya bağlanır.
+
+**Tanınan diğer başlıklar:** `Brand`, `Markası`
+
+### Kategori — zorunlu
+
+Parçanın türü. Müşterinin 2. adımda seçtiği şey budur. Kategori adına göre ikon ve renk otomatik atanır.
+
+```
+Ekran / Batarya / Şarj Soketi / Arka Kapak / Kamera / Hoparlör / Ön Cam (Glass) /
+Kasa / Titreşim Motoru / Mikrofon / Anakart / Parmak İzi Sensörü
+```
+
+**Tanınan diğer başlıklar:** `Parça Türü`, `Parça Tipi`, `Ürün Grubu`, `Grup`, `Category`
+
+### Model — zorunlu
+
+```
+iPhone 11 / iPhone 14 Pro Max / Galaxy A53 / Galaxy S24 Ultra / Redmi Note 12 / GM 22
+```
+
+Model adını tutarlı yaz: `iPhone 11` ile `Iphone 11` aynı sayılır (Türkçe karakter ve büyük/küçük harf farkı yok sayılır), ama `iPhone11` ayrı bir model olur.
+
+**Tanınan diğer başlıklar:** `Telefon Modeli`, `Cihaz`, `Cihaz Modeli`
+
+### Kalite / Çeşit — zorunlu
+
+Son ekranda müşteriye listelenen satırın adı. İşin en önemli kolonu bu: müşteri burada 1. kalite mi 2. kalite mi aldığını görür.
+
+```
+Servis Orijinal (Kutulu)
+Çıkma Orijinal (Sökme)
+1. Kalite OLED (Hard)
+2. Kalite OLED (Soft)
+Incell GX
+A Kalite TFT
+1. Kalite Yüksek Kapasite
+Ekonomik
+```
+
+Site, yazdığın metne bakıp otomatik renkli bir seviye etiketi ekler:
+
+| Metinde geçerse | Etiket | Renk |
+|-----------------|--------|------|
+| `servis`, `orijinal` | **ORİJİNAL** | altın |
+| `1. kalite`, `hard`, `yüksek` | **1. KALİTE** | mavi |
+| `2. kalite`, `soft`, `incell` | **2. KALİTE** | mor |
+| `ekonomik`, `tft`, `standart` | **EKONOMİK** | gri |
+
+Hiçbiri geçmezse etiket konulmaz, sadece yazdığın ad görünür. Yani istediğin adı yazabilirsin, sistem seni zorlamaz.
+
+Boş bırakırsan `Standart` yazılır.
+
+**Tanınan diğer başlıklar:** `Kalite`, `Çeşit`, `Ürün`, `Ürün Adı`, `Tip`, `Variant`
+
+ERP dosyasında `Gorunum` ve `Renk` ayrı kolonlardır; site üçünü birleştirip tek satır
+adı yapar: `A Kalite · Çıtasız · BLACK`. Böylece aynı modelin siyah ve kırmızı arka
+kapağı listede ayrı satır olur.
+
+### Stok Kodu — isteğe bağlı
+
+Kendi ürün kodun veya barkodun. Fiyatın altında küçük, tek aralıklı yazıyla görünür; müşteri sipariş verirken kolaylık olur.
+
+**Tanınan diğer başlıklar:** `Kod`, `Barkod`, `SKU`, `Ürün Kodu`
+
+### Toptan Fiyat / Perakende Fiyat
+
+**En az biri dolu olmalı.** İkisi de boşsa satır atlanır.
+
+Yazım biçimi serbest, hepsi doğru okunur:
+
+| Excel'de yazan | Okunan değer |
+|----------------|--------------|
+| `1250` | 1.250 |
+| `1250,50` | 1.250,50 |
+| `1.250,50` | 1.250,50 |
+| `1.250,50 TL` | 1.250,50 |
+| `1,250.50` | 1.250,50 |
+
+En sağlıklısı: hücreyi Excel'de **Sayı** biçimine alıp sadece sayıyı yazmak.
+
+**Tanınan diğer başlıklar:**
+- Toptan için: `Toptan`, `Toptan Fiyatı`, `Bayi Fiyatı`, `Wholesale`, **`Satis1`** (ERP)
+- Perakende için: `Perakende`, `Perakende Fiyatı`, `Liste Fiyatı`, `Satış Fiyatı`, `Müşteri Fiyatı`, `Retail`, **`Satis2`** (ERP)
+
+> Müşteriye sadece toptan ya da sadece perakende göstermek istiyorsan Excel'i değiştirmene gerek yok: panelden **Site ayarları → "Perakende fiyatı göster"** anahtarını kapatman yeterli.
+
+### Para Birimi — isteğe bağlı
+
+`TRY`, `USD`, `EUR`. `TL`, `₺`, `# Excel Rehberi — Fiyat Listesi Nasıl Doldurulur?
+
+Bu dosya, siteye yüklediğin Excel'in nasıl hazırlanacağını anlatır. Aceleyse tek cümle: **panelden "Mevcut listeyi indir" ile dosyayı al, fiyatları değiştir, geri yükle.**
+
+---
+
+## 0. ERP kullanıyorsan: ayrı Excel hazırlama
+
+TeknikERP'den indirdiğin **stok Excel'i doğrudan buraya yüklenir.** Kolonları
+değiştirmene, silmene, sıralamana gerek yok — dosyayı olduğu gibi sürükle bırak.
+
+```
+ERP → Stok Listesi → Excel indir   (SM-stoklar-20260908-1030.xlsx)
+        ↓
+Fiyat sitesi → Yönetim paneli → dosyayı sürükle → "Yükle ve yayına al"
+```
+
+Site, ERP'nin kolonlarını şöyle karşılar:
+
+| ERP'deki kolon | Sitede karşılığı |
+|---|---|
+| `Marka` | Marka (1. adım) |
+| `Kategori` | Parça türü (2. adım) |
+| `Model` | Model (3. adım) |
+| `Kalite` + `Gorunum` + `Renk` | Satır adı — "A Kalite · Çıtasız · BLACK" |
+| `Satis1` | **Toptan** fiyat |
+| `Satis2` | **Perakende** fiyat |
+| `StokKodu` | Stok kodu |
+| `Aciklama` | Not |
+
+ERP'nin diğer kolonları (`Rmb`, `AlisFiyati`, `Bakiye`, `AlisAdedi`, `Uyumlu`…)
+**okunmaz.** Alış fiyatın ve maliyetin siteye hiçbir şekilde çıkmaz.
+
+> **Para birimi:** ERP fiyatları USD tutar ve indirdiğin dosyada para birimi kolonu
+> yoktur. Bu yüzden panelde **Site ayarları → "Fiyatların para birimi"** ayarı
+> vardır; ERP kullanıyorsan **USD** olmalı. Yanlış bırakılırsa 32 dolarlık ekran
+> sitede 32 TL görünür.
+
+> **Fiyatı 0 olan ürünler yayına girmez.** ERP'de fiyatı doldurulmamış ürünler 0
+> olarak iner; müşteriye "0 USD" göstermek yerine o satırlar atlanır ve yükleme
+> raporunda tek tek yazılır.
+
+---
+
+## 1. ERP kullanmıyorsan: doğru çalışma yöntemi
 
 ```
 Yönetim paneli → "Mevcut listeyi indir"
@@ -114,14 +317,17 @@ Yazım biçimi serbest, hepsi doğru okunur:
 En sağlıklısı: hücreyi Excel'de **Sayı** biçimine alıp sadece sayıyı yazmak.
 
 **Tanınan diğer başlıklar:**
-- Toptan için: `Toptan`, `Toptan Fiyatı`, `Bayi Fiyatı`, `Wholesale`
-- Perakende için: `Perakende`, `Perakende Fiyatı`, `Liste Fiyatı`, `Satış Fiyatı`, `Müşteri Fiyatı`, `Retail`
+- Toptan için: `Toptan`, `Toptan Fiyatı`, `Bayi Fiyatı`, `Wholesale`, **`Satis1`** (ERP)
+- Perakende için: `Perakende`, `Perakende Fiyatı`, `Liste Fiyatı`, `Satış Fiyatı`, `Müşteri Fiyatı`, `Retail`, **`Satis2`** (ERP)
 
 > Müşteriye sadece toptan ya da sadece perakende göstermek istiyorsan Excel'i değiştirmene gerek yok: panelden **Site ayarları → "Perakende fiyatı göster"** anahtarını kapatman yeterli.
 
 ### Para Birimi — isteğe bağlı
 
-`TRY`, `USD`, `EUR`. Boş bırakırsan `TRY` kabul edilir. `TL`, `₺`, `$`, `€`, `Dolar`, `Euro` yazımları da tanınır.
+, `€`, `Dolar`, `Euro` yazımları da tanınır.
+
+Kolonu hiç koymazsan (ERP dosyasında yoktur) panelden seçtiğin **"Fiyatların para
+birimi"** ayarı geçerli olur — ERP kullanıyorsan USD.
 
 Dövizli fiyat kullanıyorsan panelden **Dolar/Euro kuru** gir; site fiyatın altına `~ 1.905 ₺` şeklinde TL karşılığını yazar. Kuru değiştirdiğin anda bütün TL karşılıkları güncellenir — Excel'e dokunmana gerek kalmaz.
 

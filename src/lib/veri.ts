@@ -38,6 +38,7 @@ export const VARSAYILAN_AYARLAR: Ayarlar = {
   toptanGoster: true,
   kdvDahil: false,
   kdvOrani: 20,
+  varsayilanParaBirimi: "USD",
   usdKuru: 0,
   eurKuru: 0,
 };

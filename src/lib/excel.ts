@@ -16,7 +16,9 @@ type Alan =
   | "perakende"
   | "paraBirimi"
   | "stok"
-  | "not";
+  | "not"
+  | "renk"
+  | "gorunum";
 
 /** Excel basliklari farkli yazilmis olsa da tanimak icin esanlamli liste */
 const BASLIK_ESLESMELERI: { alan: Alan; anahtarlar: string[] }[] = [
@@ -43,7 +45,18 @@ const BASLIK_ESLESMELERI: { alan: Alan; anahtarlar: string[] }[] = [
   { alan: "stokKodu", anahtarlar: ["stok kodu", "stokkodu", "kod", "barkod", "sku", "urun kodu"] },
   {
     alan: "toptan",
-    anahtarlar: ["toptan", "toptan fiyat", "toptan fiyati", "toptan satis", "wholesale", "bayi fiyati", "bayi"],
+    // "satis 1" / "satis1": ERP'nin stok Excel'inde toptan fiyat bu adla iner.
+    anahtarlar: [
+      "toptan",
+      "toptan fiyat",
+      "toptan fiyati",
+      "toptan satis",
+      "wholesale",
+      "bayi fiyati",
+      "bayi",
+      "satis 1",
+      "satis1",
+    ],
   },
   {
     alan: "perakende",
@@ -55,11 +68,19 @@ const BASLIK_ESLESMELERI: { alan: Alan; anahtarlar: string[] }[] = [
       "satis fiyati",
       "retail",
       "musteri fiyati",
+      // ERP'nin stok Excel'inde perakende fiyat bu adla iner
+      "satis 2",
+      "satis2",
     ],
   },
   { alan: "paraBirimi", anahtarlar: ["para birimi", "parabirimi", "doviz", "currency", "kur"] },
   { alan: "stok", anahtarlar: ["stok", "stok durumu", "durum", "adet", "mevcut"] },
   { alan: "not", anahtarlar: ["not", "notlar", "aciklama", "description", "ek bilgi"] },
+  // Asagidaki ikisi ERP dosyasina ozgudur. Tek baslarina gosterilmezler;
+  // kalite metnine eklenerek ayni modelin secenekleri birbirinden ayrilir
+  // (siyah arka kapak ile kirmizi arka kapak ayni satira dusmesin).
+  { alan: "renk", anahtarlar: ["renk", "color"] },
+  { alan: "gorunum", anahtarlar: ["gorunum", "gorunus", "appearance"] },
 ];
 
 const ZORUNLU_ALANLAR: Alan[] = ["marka", "kategori", "model", "kalite"];
@@ -169,6 +190,7 @@ export interface OkumaSonucu {
 function satirlariUrunlereCevir(
   satirlar: unknown[][],
   sonuc: OkumaSonucu,
+  varsayilanParaBirimi: ParaBirimi = "TRY",
 ): void {
   if (!satirlar.length) {
     sonuc.hatalar.push("Dosyada hiç satır bulunamadı.");
@@ -232,7 +254,20 @@ function satirlariUrunlereCevir(
     const marka = temizle(hucreMetni(al(satir, "marka")));
     const kategori = temizle(hucreMetni(al(satir, "kategori")));
     const model = temizle(hucreMetni(al(satir, "model")));
-    const kalite = temizle(hucreMetni(al(satir, "kalite"))) || "Standart";
+    /*
+     * Satirin musteriye gorunen adi. ERP dosyasinda kalite ("A Kalite"),
+     * gorunum ("Citali") ve renk ("BLACK") ayri sutunlardadir; birlestirmezsek
+     * ayni modelin uc arka kapagi listede uc kez "A Kalite" diye gorunur.
+     * Ayni deger iki sutunda tekrarlanirsa bir kez yazilir.
+     */
+    const kaliteParcalari: string[] = [];
+    for (const alan of ["kalite", "gorunum", "renk"] as const) {
+      const deger = temizle(hucreMetni(al(satir, alan)));
+      if (!deger) continue;
+      if (kaliteParcalari.some((v) => sadeMetin(v) === sadeMetin(deger))) continue;
+      kaliteParcalari.push(deger);
+    }
+    const kalite = kaliteParcalari.join(" · ") || "Standart";
 
     if (!marka || !kategori || !model) {
       sonuc.atlananSatir++;
@@ -244,8 +279,14 @@ function satirlariUrunlereCevir(
       continue;
     }
 
-    const toptan = fiyatCoz(al(satir, "toptan"));
-    const perakende = fiyatCoz(al(satir, "perakende"));
+    /*
+     * Sifir fiyat "bedava" degil "girilmemis" demektir: ERP'de fiyati
+     * doldurulmamis urunler 0 olarak iner. Musteriye "0 USD" gostermek
+     * yerine bos kabul edip satiri atliyoruz.
+     */
+    const sifirBos = (deger: number | null) => (deger === null || deger === 0 ? null : deger);
+    const toptan = sifirBos(fiyatCoz(al(satir, "toptan")));
+    const perakende = sifirBos(fiyatCoz(al(satir, "perakende")));
 
     if (toptan === null && perakende === null) {
       sonuc.atlananSatir++;
@@ -265,7 +306,7 @@ function satirlariUrunlereCevir(
       stokKodu: temizle(hucreMetni(al(satir, "stokKodu"))) || undefined,
       toptan,
       perakende,
-      paraBirimi: paraBirimiCoz(al(satir, "paraBirimi")),
+      paraBirimi: paraBirimiCoz(al(satir, "paraBirimi"), varsayilanParaBirimi),
       stok: temizle(hucreMetni(al(satir, "stok"))) || undefined,
       not: temizle(hucreMetni(al(satir, "not"))) || undefined,
       sira: sira++,
@@ -329,6 +370,8 @@ function csvAyristir(icerik: string): unknown[][] {
 export async function dosyayiOku(
   govde: ArrayBuffer,
   dosyaAdi: string,
+  /** "Para Birimi" kolonu olmayan dosyalarda fiyatlarin birimi */
+  varsayilanParaBirimi: ParaBirimi = "TRY",
 ): Promise<OkumaSonucu> {
   const sonuc: OkumaSonucu = {
     urunler: [],
@@ -345,7 +388,7 @@ export async function dosyayiOku(
   try {
     if (uzanti === "csv" || uzanti === "txt") {
       const metin = new TextDecoder("utf-8").decode(govde);
-      satirlariUrunlereCevir(csvAyristir(metin), sonuc);
+      satirlariUrunlereCevir(csvAyristir(metin), sonuc, varsayilanParaBirimi);
       return sonuc;
     }
 
@@ -379,7 +422,7 @@ export async function dosyayiOku(
       satirlar.push(Array.isArray(degerler) ? degerler.slice(1) : []);
     });
 
-    satirlariUrunlereCevir(satirlar, sonuc);
+    satirlariUrunlereCevir(satirlar, sonuc, varsayilanParaBirimi);
     if (sayfalar.length > 1 && sayfa.name) {
       sonuc.uyarilar.push(`"${sayfa.name}" sayfası okundu.`);
     }

@@ -40,6 +40,12 @@ export interface Ayarlar {
   /** Fiyatlara KDV dahil mi */
   kdvDahil: boolean;
   kdvOrani: number;
+  /**
+   * Excel'de "Para Birimi" kolonu YOKSA fiyatlarin hangi birimde
+   * oldugu kabul edilecek. ERP'den inen stok dosyasinda boyle bir
+   * kolon yoktur ve oradaki fiyatlar USD'dir.
+   */
+  varsayilanParaBirimi: ParaBirimi;
   /** Doviz cinsli fiyatlarin TL karsiligini gostermek icin kurlar */
   usdKuru: number;
   eurKuru: number;
