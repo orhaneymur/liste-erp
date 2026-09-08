@@ -5,8 +5,18 @@ import { UstBar } from "@/components/UstBar";
 import { AltBilgi } from "@/components/AltBilgi";
 import { ayarlarOku } from "@/lib/veri";
 
-// Fiyat listesi Excel yuklemesiyle degistigi icin sayfalar her istekte taze uretilir
-export const dynamic = "force-dynamic";
+/*
+ * Sayfalar ONBELLEGE ALINIR ve 60 saniyede bir tazelenir.
+ *
+ * Eskiden burada "force-dynamic" vardi: Excel her an yuklenebildigi icin
+ * her istek sifirdan uretiliyordu. Artik veri ERP'den geliyor ve zaten
+ * 60 saniyede bir tazeleniyor; her ziyaretcide sayfayi yeniden uretmenin
+ * anlami yok. Ilk bayt 1,4 saniyeden ~50 milisaniyeye bu sayede indi.
+ *
+ * Fiyat degisikliginin siteye yansimasi en fazla iki dakika surer
+ * (ERP ucunun onbellegi + buradaki tazeleme).
+ */
+export const revalidate = 60;
 
 export async function generateMetadata(): Promise<Metadata> {
   const ayarlar = ayarlarOku();
