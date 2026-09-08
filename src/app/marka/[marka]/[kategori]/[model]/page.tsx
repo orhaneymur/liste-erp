@@ -23,9 +23,9 @@ type Parametreler = {
 
 export async function generateMetadata({ params }: Parametreler): Promise<Metadata> {
   const { marka, kategori, model } = await params;
-  const mAd = markaAdi(marka);
-  const kAd = kategoriAdi(marka, kategori);
-  const modAd = modelAdi(marka, kategori, model);
+  const mAd = await markaAdi(marka);
+  const kAd = await kategoriAdi(marka, kategori);
+  const modAd = await modelAdi(marka, kategori, model);
   return {
     title: mAd && kAd && modAd ? `${modAd} ${kAd} fiyatları` : "Sayfa bulunamadı",
   };
@@ -33,15 +33,15 @@ export async function generateMetadata({ params }: Parametreler): Promise<Metada
 
 export default async function FiyatSayfasi({ params }: Parametreler) {
   const { marka, kategori, model } = await params;
-  const mAd = markaAdi(marka);
-  const kAd = kategoriAdi(marka, kategori);
-  const modAd = modelAdi(marka, kategori, model);
+  const mAd = await markaAdi(marka);
+  const kAd = await kategoriAdi(marka, kategori);
+  const modAd = await modelAdi(marka, kategori, model);
   if (!mAd || !kAd || !modAd) notFound();
 
-  const satirlar = fiyatlar(marka, kategori, model);
+  const satirlar = await fiyatlar(marka, kategori, model);
   const ayarlar = ayarlarOku();
-  const bilgi = istatistik();
-  const digerKategoriler = modelinDigerKategorileri(marka, model);
+  const bilgi = await istatistik();
+  const digerKategoriler = await modelinDigerKategorileri(marka, model);
   const { Ikon, renk } = kategoriGorunumu(kAd);
 
   return (

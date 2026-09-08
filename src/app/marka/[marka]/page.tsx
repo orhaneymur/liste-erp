@@ -11,16 +11,16 @@ type Parametreler = { params: Promise<{ marka: string }> };
 
 export async function generateMetadata({ params }: Parametreler): Promise<Metadata> {
   const { marka } = await params;
-  const ad = markaAdi(marka);
+  const ad = await markaAdi(marka);
   return { title: ad ? `${ad} yedek parça fiyatları` : "Marka bulunamadı" };
 }
 
 export default async function MarkaSayfasi({ params }: Parametreler) {
   const { marka } = await params;
-  const ad = markaAdi(marka);
+  const ad = await markaAdi(marka);
   if (!ad) notFound();
 
-  const liste = kategoriler(marka);
+  const liste = await kategoriler(marka);
 
   return (
     <div>

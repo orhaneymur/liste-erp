@@ -1,13 +1,12 @@
-import Link from "next/link";
-import { Boxes, FileSpreadsheet, Smartphone, Sparkles, Tag, Zap } from "lucide-react";
+import { Boxes, Smartphone, Sparkles, Tag, TriangleAlert, Zap } from "lucide-react";
 import { MarkaIzgarasi } from "@/components/MarkaIzgarasi";
 import { ayarlarOku, istatistik, markalar } from "@/lib/veri";
 import { gecenSure, sayiBicimle } from "@/lib/bicim";
 
-export default function AnaSayfa() {
+export default async function AnaSayfa() {
   const ayarlar = ayarlarOku();
-  const liste = markalar();
-  const bilgi = istatistik();
+  const liste = await markalar();
+  const bilgi = await istatistik();
 
   const kartlar = [
     { etiket: "Marka", deger: bilgi.markaSayisi, Ikon: Tag },
@@ -72,20 +71,17 @@ export default function AnaSayfa() {
       {/* ---------------- Marka seçimi ---------------- */}
       {liste.length === 0 ? (
         <div className="cam flex flex-col items-center gap-4 rounded-kart px-6 py-16 text-center">
-          <FileSpreadsheet className="size-10 text-vurgu-400" />
+          <TriangleAlert className="size-10 text-amber-400" />
           <div>
-            <h2 className="text-lg font-bold text-white">Henüz fiyat listesi yüklenmemiş</h2>
+            <h2 className="text-lg font-bold text-white">
+              {bilgi.erpHatasi ? "Liste şu an açılamadı" : "Listede yayınlanmış ürün yok"}
+            </h2>
             <p className="mt-1 max-w-md text-sm text-slate-400">
-              Yönetim panelinden Excel dosyanızı yükledikten sonra marka, kategori ve modeller
-              burada otomatik olarak listelenecek.
+              {bilgi.erpHatasi
+                ? "Fiyat bilgisine ulaşılamadı. Sayfayı birazdan yenilemeyi deneyin."
+                : "Fiyatı girilmiş ürün bulunamadı. Fiyatlar girildikçe burada görünecek."}
             </p>
           </div>
-          <Link
-            href="/admin"
-            className="rounded-full bg-gradient-to-r from-vurgu-500 to-mor-600 px-5 py-2.5 text-sm font-semibold text-white shadow-lg shadow-vurgu-600/30 transition hover:brightness-110"
-          >
-            Yönetim paneline git
-          </Link>
         </div>
       ) : (
         <MarkaIzgarasi markalar={liste} />

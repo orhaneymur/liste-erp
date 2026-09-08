@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Settings, Smartphone } from "lucide-react";
+import { Smartphone } from "lucide-react";
 import { Arama } from "./Arama";
 
 export function UstBar({ firmaAdi }: { firmaAdi: string }) {
@@ -20,14 +20,6 @@ export function UstBar({ firmaAdi }: { firmaAdi: string }) {
 
         <div className="flex items-center gap-2">
           <Arama />
-          <Link
-            href="/admin"
-            title="Yönetim paneli"
-            aria-label="Yönetim paneli"
-            className="flex size-10 items-center justify-center rounded-full border border-white/10 bg-white/5 text-slate-400 transition hover:border-white/20 hover:text-white"
-          >
-            <Settings className="size-[18px]" />
-          </Link>
         </div>
       </div>
     </header>

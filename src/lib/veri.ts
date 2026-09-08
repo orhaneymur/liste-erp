@@ -1,8 +1,18 @@
-import fs from "node:fs";
-import path from "node:path";
+/**
+ * Sayfalarin kullandigi veri katmani.
+ *
+ * Onceden burasi diskteki bir JSON dosyasini okuyordu (Excel yuklenerek
+ * doldurulan liste). Artik TEK kaynak ERP'dir: erp.ts uctan listeyi
+ * ceker, buradaki fonksiyonlar o listeden marka > kategori > model
+ * agacini uretir.
+ *
+ * Yazma islemi YOKTUR — bu uygulama hicbir veri saklamaz. Kalici disk,
+ * yedek, yonetim paneli ve sifre gerekmez; pod her yeniden bastiginda
+ * ayni listeyi ERP'den alir.
+ */
+import { erpVerisiniOku } from "./erp";
 import { slugla, temizle } from "./slug";
 import { logoYolu } from "./logolar";
-import { ornekUrunler } from "./ornek-veri";
 import type {
   Ayarlar,
   FiyatSatiri,
@@ -11,187 +21,89 @@ import type {
   ModelOzeti,
   ParaBirimi,
   Urun,
-  VeriTabani,
 } from "./tipler";
 
 /* ------------------------------------------------------------------ */
-/* Dosya yollari                                                       */
+/* Ayarlar — ortam degiskenlerinden                                     */
 /* ------------------------------------------------------------------ */
-
-const VERI_KLASORU = process.env.VERI_KLASORU
-  ? path.resolve(process.env.VERI_KLASORU)
-  : path.join(process.cwd(), "veri");
-
-const FIYAT_DOSYASI = path.join(VERI_KLASORU, "fiyatlar.json");
-const AYAR_DOSYASI = path.join(VERI_KLASORU, "ayarlar.json");
-
-export const VARSAYILAN_AYARLAR: Ayarlar = {
-  firmaAdi: "Telefon Yedek Parça",
-  sloganMetni: "Güncel toptan ve perakende parça fiyatları",
-  telefon: "",
-  whatsapp: "",
-  eposta: "",
-  adres: "",
-  uyariMetni:
-    "Fiyatlar bilgilendirme amaçlıdır, stok durumuna göre değişebilir. Sipariş öncesi teyit alınması gerekir.",
-  perakendeGoster: true,
-  toptanGoster: true,
-  kdvDahil: false,
-  kdvOrani: 20,
-  varsayilanParaBirimi: "USD",
-  usdKuru: 0,
-  eurKuru: 0,
-};
-
-function klasorHazirla() {
-  if (!fs.existsSync(VERI_KLASORU)) {
-    fs.mkdirSync(VERI_KLASORU, { recursive: true });
-  }
-}
-
-/* ------------------------------------------------------------------ */
-/* Onbellek (dosya degismedikce tekrar okumaz)                         */
-/* ------------------------------------------------------------------ */
-
-let fiyatOnbellek: { mtime: number; veri: VeriTabani } | null = null;
-let ayarOnbellek: { mtime: number; veri: Ayarlar } | null = null;
-
-/* ------------------------------------------------------------------ */
-/* Okuma / yazma                                                       */
-/* ------------------------------------------------------------------ */
-
-export function veriOku(): VeriTabani {
-  klasorHazirla();
-
-  // Dosya yoksa ornek veri ile olustur
-  if (!fs.existsSync(FIYAT_DOSYASI)) {
-    const baslangic: VeriTabani = {
-      urunler: ornekUrunler(),
-      guncellenmeTarihi: new Date().toISOString(),
-      kaynakDosya: "ornek-liste",
-    };
-    fs.writeFileSync(FIYAT_DOSYASI, JSON.stringify(baslangic), "utf8");
-    fiyatOnbellek = { mtime: fs.statSync(FIYAT_DOSYASI).mtimeMs, veri: baslangic };
-    return baslangic;
-  }
-
-  const mtime = fs.statSync(FIYAT_DOSYASI).mtimeMs;
-  if (fiyatOnbellek && fiyatOnbellek.mtime === mtime) return fiyatOnbellek.veri;
-
-  try {
-    const veri = JSON.parse(fs.readFileSync(FIYAT_DOSYASI, "utf8")) as VeriTabani;
-    veri.urunler ??= [];
-    fiyatOnbellek = { mtime, veri };
-    return veri;
-  } catch {
-    return { urunler: [], guncellenmeTarihi: null, kaynakDosya: null };
-  }
-}
-
-export function veriYaz(urunler: Urun[], kaynakDosya: string | null): VeriTabani {
-  klasorHazirla();
-  const veri: VeriTabani = {
-    urunler,
-    guncellenmeTarihi: new Date().toISOString(),
-    kaynakDosya,
-  };
-  fs.writeFileSync(FIYAT_DOSYASI, JSON.stringify(veri), "utf8");
-  fiyatOnbellek = { mtime: fs.statSync(FIYAT_DOSYASI).mtimeMs, veri };
-  return veri;
-}
-
-export function ayarlarOku(): Ayarlar {
-  klasorHazirla();
-  if (!fs.existsSync(AYAR_DOSYASI)) return { ...VARSAYILAN_AYARLAR };
-
-  const mtime = fs.statSync(AYAR_DOSYASI).mtimeMs;
-  if (ayarOnbellek && ayarOnbellek.mtime === mtime) return ayarOnbellek.veri;
-
-  try {
-    const kayitli = JSON.parse(fs.readFileSync(AYAR_DOSYASI, "utf8")) as Partial<Ayarlar>;
-    const veri = { ...VARSAYILAN_AYARLAR, ...kayitli };
-    ayarOnbellek = { mtime, veri };
-    return veri;
-  } catch {
-    return { ...VARSAYILAN_AYARLAR };
-  }
-}
-
-export function ayarlarYaz(yeni: Partial<Ayarlar>): Ayarlar {
-  klasorHazirla();
-  const veri = { ...ayarlarOku(), ...yeni };
-  fs.writeFileSync(AYAR_DOSYASI, JSON.stringify(veri, null, 2), "utf8");
-  ayarOnbellek = { mtime: fs.statSync(AYAR_DOSYASI).mtimeMs, veri };
-  return veri;
-}
-
-/** Yedek olarak son yuklenen listeyi saklar (ustune yazmadan once cagirilir) */
-export function yedekAl(): string | null {
-  if (!fs.existsSync(FIYAT_DOSYASI)) return null;
-  klasorHazirla();
-  const yedekKlasoru = path.join(VERI_KLASORU, "yedekler");
-  if (!fs.existsSync(yedekKlasoru)) fs.mkdirSync(yedekKlasoru, { recursive: true });
-
-  const damga = new Date().toISOString().replace(/[:.]/g, "-").slice(0, 19);
-  const hedef = path.join(yedekKlasoru, `fiyatlar-${damga}.json`);
-  fs.copyFileSync(FIYAT_DOSYASI, hedef);
-
-  // en fazla 20 yedek tut
-  const yedekler = fs
-    .readdirSync(yedekKlasoru)
-    .filter((d) => d.endsWith(".json"))
-    .sort();
-  for (const eski of yedekler.slice(0, Math.max(0, yedekler.length - 20))) {
-    fs.rmSync(path.join(yedekKlasoru, eski), { force: true });
-  }
-  return hedef;
-}
-
-/* ------------------------------------------------------------------ */
-/* Sorgular - marka / kategori / model / fiyat                         */
-/* ------------------------------------------------------------------ */
-
-/** Listede en cok kullanilan para birimini bulur */
-function baskinParaBirimi(urunler: Urun[]): ParaBirimi {
-  const sayac = new Map<ParaBirimi, number>();
-  for (const u of urunler) sayac.set(u.paraBirimi, (sayac.get(u.paraBirimi) ?? 0) + 1);
-  let baskin: ParaBirimi = "TRY";
-  let enCok = -1;
-  for (const [birim, adet] of sayac) {
-    if (adet > enCok) {
-      baskin = birim;
-      enCok = adet;
-    }
-  }
-  return baskin;
-}
 
 /**
- * Fiyat araligini hesaplar.
- * Farkli para birimleri karisiksa sadece baskin para biriminin fiyatlari
- * karsilastirilir; boylece 45 USD ile 35 TL yan yana kiyaslanmis olmaz.
+ * "0", "false", "hayir" gibi degerleri kapali sayar. Bos birakilan
+ * degisken varsayilana duser.
  */
-function fiyatlariTopla(urunler: Urun[]): {
-  enUcuz: number | null;
-  enPahali: number | null;
-  paraBirimi: ParaBirimi;
-} {
-  const paraBirimi = baskinParaBirimi(urunler);
-  const gecerli = urunler
-    .filter((u) => u.paraBirimi === paraBirimi)
-    .map((u) => u.toptan ?? u.perakende)
-    .filter((f): f is number => typeof f === "number" && f > 0);
+const evetMi = (deger: string | undefined, varsayilan: boolean): boolean => {
+  if (deger === undefined || deger.trim() === "") return varsayilan;
+  return !["0", "false", "hayir", "hayır", "kapali", "kapalı"].includes(
+    deger.trim().toLowerCase(),
+  );
+};
 
-  if (!gecerli.length) return { enUcuz: null, enPahali: null, paraBirimi };
-  return { enUcuz: Math.min(...gecerli), enPahali: Math.max(...gecerli), paraBirimi };
+/**
+ * Musteriye ozel gorunum ayarlari. Kubernetes'te ConfigMap'ten ortam
+ * degiskeni olarak gelir; degistirmek icin imaj derlemek gerekmez.
+ * Bos birakilan alan sayfada hic gorunmez.
+ */
+export function ayarlarOku(): Ayarlar {
+  return {
+    firmaAdi: process.env.FIRMA_ADI?.trim() || "Fiyat Listesi",
+    sloganMetni:
+      process.env.SLOGAN?.trim() ||
+      "Marka, kategori ve model seçin; güncel toptan ve perakende fiyatları görün.",
+    telefon: process.env.TELEFON?.trim() || "",
+    whatsapp: process.env.WHATSAPP?.trim() || "",
+    eposta: process.env.EPOSTA?.trim() || "",
+    adres: process.env.ADRES?.trim() || "",
+    uyariMetni:
+      process.env.UYARI?.trim() ||
+      "Fiyatlar bilgilendirme amaçlıdır, stok durumuna göre değişebilir. Sipariş öncesi teyit alınması gerekir.",
+    toptanGoster: evetMi(process.env.TOPTAN_GOSTER, true),
+    perakendeGoster: evetMi(process.env.PERAKENDE_GOSTER, true),
+    kdvDahil: evetMi(process.env.KDV_DAHIL, false),
+    kdvOrani: Number(process.env.KDV_ORANI) || 20,
+    /*
+     * Kurlar 0: fiyatlar USD gosterilir, TL karsiligi YAZILMAZ. Elle
+     * guncellenen bir kur eskidiginde sessizce yanlis fiyat gostermesin.
+     * Musteri isterse USD_KURU verilir, TL karsiligi kucuk punto eklenir.
+     */
+    usdKuru: Number(process.env.USD_KURU) || 0,
+    eurKuru: Number(process.env.EUR_KURU) || 0,
+  };
 }
+
+/* ------------------------------------------------------------------ */
+/* Yardimcilar                                                         */
+/* ------------------------------------------------------------------ */
 
 /** Turkce alfabetik siralama */
 const trSirala = (a: string, b: string) => a.localeCompare(b, "tr");
 
-export function markalar(): MarkaOzeti[] {
-  const { urunler } = veriOku();
-  const harita = new Map<string, { ad: string; kategoriler: Set<string>; modeller: Set<string>; sayi: number }>();
+/** ERP tum fiyatlari USD tutar */
+const PARA: ParaBirimi = "USD";
+
+/** Bir urun kumesinin fiyat araligi (toptan yoksa perakendeye duser) */
+function fiyatAraligi(urunler: Urun[]): { enUcuz: number | null; enPahali: number | null } {
+  const gecerli = urunler
+    .map((u) => u.toptan ?? u.perakende)
+    .filter((f): f is number => typeof f === "number" && f > 0);
+  if (!gecerli.length) return { enUcuz: null, enPahali: null };
+  return { enUcuz: Math.min(...gecerli), enPahali: Math.max(...gecerli) };
+}
+
+async function urunleriAl(): Promise<Urun[]> {
+  const { urunler } = await erpVerisiniOku();
+  return urunler;
+}
+
+/* ------------------------------------------------------------------ */
+/* Agac                                                                */
+/* ------------------------------------------------------------------ */
+
+export async function markalar(): Promise<MarkaOzeti[]> {
+  const urunler = await urunleriAl();
+  const harita = new Map<
+    string,
+    { ad: string; kategoriler: Set<string>; modeller: Set<string>; sayi: number }
+  >();
 
   for (const u of urunler) {
     const slug = slugla(u.marka);
@@ -218,14 +130,13 @@ export function markalar(): MarkaOzeti[] {
     .sort((a, b) => b.urunSayisi - a.urunSayisi || trSirala(a.ad, b.ad));
 }
 
-export function markaAdi(markaSlug: string): string | null {
-  const { urunler } = veriOku();
-  const bulunan = urunler.find((u) => slugla(u.marka) === markaSlug);
-  return bulunan ? bulunan.marka : null;
+export async function markaAdi(markaSlug: string): Promise<string | null> {
+  const urunler = await urunleriAl();
+  return urunler.find((u) => slugla(u.marka) === markaSlug)?.marka ?? null;
 }
 
-export function kategoriler(markaSlug: string): KategoriOzeti[] {
-  const { urunler } = veriOku();
+export async function kategoriler(markaSlug: string): Promise<KategoriOzeti[]> {
+  const urunler = await urunleriAl();
   const harita = new Map<string, { ad: string; modeller: Set<string>; sayi: number }>();
 
   for (const u of urunler) {
@@ -242,25 +153,26 @@ export function kategoriler(markaSlug: string): KategoriOzeti[] {
   }
 
   return [...harita.entries()]
-    .map(([slug, k]) => ({
-      ad: k.ad,
-      slug,
-      modelSayisi: k.modeller.size,
-      urunSayisi: k.sayi,
-    }))
+    .map(([slug, k]) => ({ ad: k.ad, slug, modelSayisi: k.modeller.size, urunSayisi: k.sayi }))
     .sort((a, b) => b.modelSayisi - a.modelSayisi || trSirala(a.ad, b.ad));
 }
 
-export function kategoriAdi(markaSlug: string, kategoriSlug: string): string | null {
-  const { urunler } = veriOku();
-  const bulunan = urunler.find(
-    (u) => slugla(u.marka) === markaSlug && slugla(u.kategori) === kategoriSlug,
+export async function kategoriAdi(
+  markaSlug: string,
+  kategoriSlug: string,
+): Promise<string | null> {
+  const urunler = await urunleriAl();
+  return (
+    urunler.find((u) => slugla(u.marka) === markaSlug && slugla(u.kategori) === kategoriSlug)
+      ?.kategori ?? null
   );
-  return bulunan ? bulunan.kategori : null;
 }
 
-export function modeller(markaSlug: string, kategoriSlug: string): ModelOzeti[] {
-  const { urunler } = veriOku();
+export async function modeller(
+  markaSlug: string,
+  kategoriSlug: string,
+): Promise<ModelOzeti[]> {
+  const urunler = await urunleriAl();
   const harita = new Map<string, Urun[]>();
 
   for (const u of urunler) {
@@ -274,34 +186,38 @@ export function modeller(markaSlug: string, kategoriSlug: string): ModelOzeti[] 
   }
 
   return [...harita.entries()]
-    .map(([slug, liste]) => {
-      const { enUcuz, enPahali, paraBirimi } = fiyatlariTopla(liste);
-      return { ad: liste[0].model, slug, cesitSayisi: liste.length, enUcuz, enPahali, paraBirimi };
-    })
+    .map(([slug, liste]) => ({
+      ad: liste[0].model,
+      slug,
+      cesitSayisi: liste.length,
+      paraBirimi: PARA,
+      ...fiyatAraligi(liste),
+    }))
     .sort((a, b) => a.ad.localeCompare(b.ad, "tr", { numeric: true }));
 }
 
-export function modelAdi(
+export async function modelAdi(
   markaSlug: string,
   kategoriSlug: string,
   modelSlug: string,
-): string | null {
-  const { urunler } = veriOku();
-  const bulunan = urunler.find(
-    (u) =>
-      slugla(u.marka) === markaSlug &&
-      slugla(u.kategori) === kategoriSlug &&
-      slugla(u.model) === modelSlug,
+): Promise<string | null> {
+  const urunler = await urunleriAl();
+  return (
+    urunler.find(
+      (u) =>
+        slugla(u.marka) === markaSlug &&
+        slugla(u.kategori) === kategoriSlug &&
+        slugla(u.model) === modelSlug,
+    )?.model ?? null
   );
-  return bulunan ? bulunan.model : null;
 }
 
-export function fiyatlar(
+export async function fiyatlar(
   markaSlug: string,
   kategoriSlug: string,
   modelSlug: string,
-): FiyatSatiri[] {
-  const { urunler } = veriOku();
+): Promise<FiyatSatiri[]> {
+  const urunler = await urunleriAl();
   const liste = urunler.filter(
     (u) =>
       slugla(u.marka) === markaSlug &&
@@ -309,21 +225,18 @@ export function fiyatlar(
       slugla(u.model) === modelSlug,
   );
 
-  const { enUcuz, paraBirimi } = fiyatlariTopla(liste);
-  return liste
+  const { enUcuz } = fiyatAraligi(liste);
+  return [...liste]
     .sort((a, b) => (b.toptan ?? 0) - (a.toptan ?? 0) || a.sira - b.sira)
-    .map((u) => ({
-      ...u,
-      enUcuzMu: u.paraBirimi === paraBirimi && (u.toptan ?? u.perakende) === enUcuz,
-    }));
+    .map((u) => ({ ...u, enUcuzMu: (u.toptan ?? u.perakende) === enUcuz }));
 }
 
-/** Ayni modelin diger kategorilerdeki karsiliklarini dondurur (hizli gecis icin) */
-export function modelinDigerKategorileri(
+/** Ayni modelin diger kategorilerdeki karsiliklari (hizli gecis icin) */
+export async function modelinDigerKategorileri(
   markaSlug: string,
   modelSlug: string,
-): { ad: string; slug: string; adet: number }[] {
-  const { urunler } = veriOku();
+): Promise<{ ad: string; slug: string; adet: number }[]> {
+  const urunler = await urunleriAl();
   const harita = new Map<string, { ad: string; adet: number }>();
   for (const u of urunler) {
     if (slugla(u.marka) !== markaSlug || slugla(u.model) !== modelSlug) continue;
@@ -352,13 +265,16 @@ export interface AramaSonucu {
 }
 
 /** Model adina gore arama yapar (marka + model birlesik metinde arar) */
-export function modelAra(sorgu: string, limit = 40): AramaSonucu[] {
+export async function modelAra(sorgu: string, limit = 40): Promise<AramaSonucu[]> {
   const temiz = temizle(sorgu);
   if (temiz.length < 2) return [];
 
   const parcalar = slugla(temiz).split("-").filter(Boolean);
-  const { urunler } = veriOku();
-  const harita = new Map<string, AramaSonucu & { katHarita: Map<string, { ad: string; adet: number }> }>();
+  const urunler = await urunleriAl();
+  const harita = new Map<
+    string,
+    AramaSonucu & { katHarita: Map<string, { ad: string; adet: number }> }
+  >();
 
   for (const u of urunler) {
     const anahtar = `${slugla(u.marka)}|${slugla(u.model)}`;
@@ -398,15 +314,20 @@ export function modelAra(sorgu: string, limit = 40): AramaSonucu[] {
         .map(([slug, k]) => ({ slug, ad: k.ad, adet: k.adet }))
         .sort((a, b) => trSirala(a.ad, b.ad)),
     }))
-    .sort((a, b) => trSirala(a.marka, b.marka) || a.model.localeCompare(b.model, "tr", { numeric: true }));
+    .sort(
+      (a, b) =>
+        trSirala(a.marka, b.marka) ||
+        a.model.localeCompare(b.model, "tr", { numeric: true }),
+    );
 }
 
 /* ------------------------------------------------------------------ */
 /* Istatistik                                                          */
 /* ------------------------------------------------------------------ */
 
-export function istatistik() {
-  const { urunler, guncellenmeTarihi, kaynakDosya } = veriOku();
+export async function istatistik() {
+  const { urunler, guncellenme, hata } = await erpVerisiniOku();
+
   const markaKumesi = new Set<string>();
   const kategoriKumesi = new Set<string>();
   const modelKumesi = new Set<string>();
@@ -422,7 +343,8 @@ export function istatistik() {
     markaSayisi: markaKumesi.size,
     kategoriSayisi: kategoriKumesi.size,
     modelSayisi: modelKumesi.size,
-    guncellenmeTarihi,
-    kaynakDosya,
+    guncellenmeTarihi: guncellenme,
+    /** ERP'ye ulasilamadi — sayfalar bunu kullaniciya soyler */
+    erpHatasi: hata,
   };
 }

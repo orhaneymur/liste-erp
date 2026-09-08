@@ -1,5 +1,31 @@
 /** Uygulamanin tum veri tipleri */
 
+/* ------------------------------------------------------------------ */
+/* ERP ucundan gelen ham kayitlar                                      */
+/* ------------------------------------------------------------------ */
+
+/** GET /api/public/fiyat-listesi -> urunler[] */
+export interface ApiUrun {
+  marka: string;
+  kategori: string;
+  model: string;
+  kalite: string;
+  gorunum: string;
+  renk: string;
+  kod: string;
+  toptan: number | null;
+  perakende: number | null;
+  /** ERP adet vermez; yalnizca satilabilir stok var mi */
+  stokVar: boolean;
+}
+
+export interface ApiYanit {
+  guncellenme: string;
+  paraBirimi: ParaBirimi;
+  urunSayisi: number;
+  urunler: ApiUrun[];
+}
+
 export type ParaBirimi = "TRY" | "USD" | "EUR";
 
 /**
@@ -40,22 +66,9 @@ export interface Ayarlar {
   /** Fiyatlara KDV dahil mi */
   kdvDahil: boolean;
   kdvOrani: number;
-  /**
-   * Excel'de "Para Birimi" kolonu YOKSA fiyatlarin hangi birimde
-   * oldugu kabul edilecek. ERP'den inen stok dosyasinda boyle bir
-   * kolon yoktur ve oradaki fiyatlar USD'dir.
-   */
-  varsayilanParaBirimi: ParaBirimi;
   /** Doviz cinsli fiyatlarin TL karsiligini gostermek icin kurlar */
   usdKuru: number;
   eurKuru: number;
-}
-
-export interface VeriTabani {
-  urunler: Urun[];
-  guncellenmeTarihi: string | null;
-  /** Son yuklenen Excel dosyasinin adi */
-  kaynakDosya: string | null;
 }
 
 /* ------------------------------------------------------------------ */

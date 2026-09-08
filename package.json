@@ -2,17 +2,15 @@
   "name": "fiyat-liste",
   "version": "1.0.0",
   "private": true,
-  "description": "Telefon yedek parca toptan/perakende fiyat listesi - musteriye link olarak gonderilebilen web uygulamasi",
+  "description": "Telefon yedek parca fiyat listesi - ERP verisinden beslenen, musteriye link olarak gonderilen web sitesi",
   "scripts": {
     "dev": "next dev -p 3000",
     "build": "next build",
     "start": "next start -p 3000",
     "logolar": "node scripts/logolari-hazirla.mjs",
-    "test": "node scripts/test-akis.mjs",
     "postinstall": "node scripts/logolari-hazirla.mjs"
   },
   "dependencies": {
-    "exceljs": "^4.4.0",
     "lucide-react": "^1.42.0",
     "next": "^16.3.4",
     "react": "^19.2.0",

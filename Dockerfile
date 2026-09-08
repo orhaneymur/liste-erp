@@ -31,15 +31,17 @@ ENV NODE_ENV=production
 ENV PORT=3000
 ENV HOSTNAME=0.0.0.0
 
-# Fiyat verisi imajin icinde DEGIL, disaridan baglanan kalici diskte durur.
-# Chart burayi bir PVC olarak baglar; pod yeniden basladiginda liste kaybolmaz.
-ENV VERI_KLASORU=/veri
+# Veri kaynagi: ayni namespace'teki ERP backend'i. Bu uygulama HICBIR
+# veri saklamaz — kalici disk, yedek ve sifre gerekmez; pod her yeniden
+# bastiginda listeyi ERP'den alir. Servis adi tum musterilerde ayni
+# oldugu icin bu deger genelde degistirilmez.
+ENV ERP_API_URL=http://teknikerp-backend:3000
 
 COPY --from=builder /app/public ./public
 COPY --from=builder /app/.next/standalone ./
 COPY --from=builder /app/.next/static ./.next/static
 
-RUN mkdir -p /veri && chown -R node:node /veri /app
+RUN chown -R node:node /app
 USER node
 
 EXPOSE 3000
