@@ -2,7 +2,6 @@ import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { AdimCubugu } from "@/components/AdimCubugu";
 import { kategoriGorunumu } from "@/components/KategoriIkonu";
-import { MarkaLogosu } from "@/components/MarkaLogosu";
 import { ModelIzgarasi } from "@/components/ModelIzgarasi";
 import { kategoriAdi, markaAdi, modeller } from "@/lib/veri";
 
@@ -22,7 +21,7 @@ export default async function KategoriSayfasi({ params }: Parametreler) {
   if (!mAd || !kAd) notFound();
 
   const liste = await modeller(marka, kategori);
-  const { Ikon, renk } = kategoriGorunumu(kAd);
+  const { Ikon } = kategoriGorunumu(kAd);
 
   return (
     <div>
@@ -33,24 +32,15 @@ export default async function KategoriSayfasi({ params }: Parametreler) {
         ]}
       />
 
-      <div className="mb-6 flex items-center gap-3.5">
-        <span
-          className={`relative flex size-14 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br ${renk} shadow-lg shadow-black/40`}
-        >
-          <Ikon className="size-7 text-white" strokeWidth={1.9} />
-          <span className="absolute -bottom-1.5 -right-1.5 flex size-7 items-center justify-center rounded-lg bg-white p-1 shadow-md">
-            <MarkaLogosu marka={mAd} />
-          </span>
-        </span>
+      <header className="mb-5 flex items-center gap-3">
+        <Ikon className="size-6 shrink-0 text-metin-2" strokeWidth={1.5} />
         <div>
-          <h1 className="text-xl font-black tracking-tight text-white sm:text-2xl">
+          <h1 className="text-xl font-semibold tracking-tight text-metin">
             {mAd} {kAd}
           </h1>
-          <p className="mt-0.5 text-sm text-slate-400">
-            {liste.length} model &middot; modeli seçin, tüm kalite fiyatları açılır
-          </p>
+          <p className="text-sm text-metin-3">{liste.length} model</p>
         </div>
-      </div>
+      </header>
 
       <ModelIzgarasi markaSlug={marka} kategoriSlug={kategori} modeller={liste} />
     </div>

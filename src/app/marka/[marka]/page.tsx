@@ -26,51 +26,35 @@ export default async function MarkaSayfasi({ params }: Parametreler) {
     <div>
       <AdimCubugu adimlar={[{ etiket: ad, href: `/marka/${marka}` }]} />
 
-      {/* Marka basligi */}
-      <div className="mb-6 flex items-center gap-4">
-        <span className="flex size-16 shrink-0 items-center justify-center rounded-2xl bg-white p-3 shadow-lg shadow-black/30 sm:size-20 sm:p-4">
+      <header className="mb-6 flex items-center gap-3">
+        <span className="flex size-10 shrink-0 items-center justify-center">
           <MarkaLogosu marka={ad} />
         </span>
         <div>
-          <h1 className="text-2xl font-black tracking-tight text-white sm:text-3xl">{ad}</h1>
-          <p className="mt-1 text-sm text-slate-400">
-            Hangi parçanın fiyatını öğrenmek istiyorsunuz?
-          </p>
+          <h1 className="text-xl font-semibold tracking-tight text-metin">{ad}</h1>
+          <p className="text-sm text-metin-3">Parça türü seçin</p>
         </div>
-      </div>
+      </header>
 
-      <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 lg:grid-cols-4">
-        {liste.map((kategori, indeks) => {
-          const { Ikon, renk } = kategoriGorunumu(kategori.ad);
+      <ul className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+        {liste.map((kategori) => {
+          const { Ikon } = kategoriGorunumu(kategori.ad);
           return (
-            <li
-              key={kategori.slug}
-              className="animate-yukari"
-              style={{ animationDelay: `${Math.min(indeks * 30, 400)}ms` }}
-            >
+            <li key={kategori.slug}>
               <Link
                 href={`/marka/${marka}/${kategori.slug}`}
-                className="isikli-kart cam group flex h-full flex-col gap-3 rounded-kart p-4 hover:-translate-y-1 hover:border-vurgu-400/40 hover:shadow-[0_18px_45px_-18px_rgba(59,130,246,0.6)] sm:p-5"
+                className="kart-baglanti flex items-center gap-3 p-3.5"
               >
-                <span
-                  className={`flex size-12 items-center justify-center rounded-xl bg-gradient-to-br ${renk} shadow-lg shadow-black/30 transition group-hover:scale-105`}
-                >
-                  <Ikon className="size-6 text-white" strokeWidth={1.9} />
-                </span>
-
-                <span className="flex-1">
-                  <span className="block text-[15px] font-bold leading-tight text-white">
+                <Ikon className="size-5 shrink-0 text-metin-2" strokeWidth={1.5} />
+                <span className="min-w-0 flex-1">
+                  <span className="block truncate text-sm font-medium text-metin">
                     {kategori.ad}
                   </span>
-                  <span className="mt-1 block text-xs text-slate-400">
-                    {kategori.modelSayisi} model &middot; {kategori.urunSayisi} çeşit
+                  <span className="block text-xs text-metin-3">
+                    {kategori.modelSayisi} model · {kategori.urunSayisi} çeşit
                   </span>
                 </span>
-
-                <span className="flex items-center gap-1 text-xs font-medium text-vurgu-300 transition group-hover:gap-2">
-                  Modelleri gör
-                  <ChevronRight className="size-3.5" />
-                </span>
+                <ChevronRight className="size-4 shrink-0 text-metin-3" />
               </Link>
             </li>
           );

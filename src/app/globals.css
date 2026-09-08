@@ -1,217 +1,119 @@
 @import "tailwindcss";
 
-/* ------------------------------------------------------------------ */
-/* Tema                                                                */
-/* ------------------------------------------------------------------ */
+/*
+ * Fiyat listesi teması.
+ *
+ * Açık zemin, ince çizgiler, tek vurgu rengi. Gradyan, parlama, blur ve
+ * animasyon YOK — üçü de hem "üretilmiş arayüz" görüntüsü veriyordu hem
+ * de mobilde kaydırmayı ağırlaştırıyordu.
+ *
+ * Amaç ticari bir fiyat listesi gibi durmak: sayılar hizalı, hiyerarşi
+ * tipografiyle kuruluyor, renk yalnızca anlam taşıdığı yerde var
+ * (stok durumu, en uygun fiyat).
+ */
 
 @theme {
-  --font-sans: "Segoe UI Variable", "Segoe UI", Inter, system-ui, -apple-system,
+  --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto,
     "Helvetica Neue", Arial, sans-serif;
 
-  --color-zemin: #05070f;
-  --color-zemin-2: #0a0f1d;
-  --color-kart: #0e1526;
-  --color-kenar: #1e293b;
+  /* Yüzeyler */
+  --color-zemin: #ffffff;
+  --color-zemin-2: #fafafa;
+  --color-kenar: #e5e5e5;
+  --color-kenar-koyu: #d4d4d4;
 
-  --color-vurgu-50: #eff6ff;
-  --color-vurgu-200: #bfdbfe;
-  --color-vurgu-300: #93c5fd;
-  --color-vurgu-400: #60a5fa;
-  --color-vurgu-500: #3b82f6;
-  --color-vurgu-600: #2563eb;
-  --color-vurgu-700: #1d4ed8;
+  /* Metin */
+  --color-metin: #171717;
+  --color-metin-2: #525252;
+  --color-metin-3: #a3a3a3;
 
-  --color-mor-400: #a78bfa;
-  --color-mor-500: #8b5cf6;
-  --color-mor-600: #7c3aed;
+  /* Tek vurgu rengi */
+  --color-vurgu: #1d4ed8;
+  --color-vurgu-hafif: #eff6ff;
 
-  --color-altin-400: #fbbf24;
-  --color-altin-500: #f59e0b;
-
-  --radius-kart: 1.25rem;
-
-  --animate-yukari: yukari 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
-  --animate-suzul: suzul 0.25s ease-out both;
-  --animate-nabiz: nabiz 2.4s ease-in-out infinite;
-  --animate-parla: parla 2.5s linear infinite;
+  /* Anlam renkleri — yalnızca stok ve en uygun fiyat için */
+  --color-var: #15803d;
+  --color-var-hafif: #f0fdf4;
+  --color-yok: #b91c1c;
+  --color-yok-hafif: #fef2f2;
 }
 
-@keyframes yukari {
-  from {
-    opacity: 0;
-    transform: translateY(14px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-@keyframes suzul {
-  from {
-    opacity: 0;
-    transform: translateY(-6px) scale(0.99);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-  }
-}
-
-@keyframes nabiz {
-  0%,
-  100% {
-    opacity: 0.45;
-    transform: scale(1);
-  }
-  50% {
-    opacity: 0.75;
-    transform: scale(1.08);
-  }
-}
-
-@keyframes parla {
-  from {
-    background-position: 0% 50%;
-  }
-  to {
-    background-position: 200% 50%;
-  }
-}
-
-/* ------------------------------------------------------------------ */
-/* Temel                                                               */
-/* ------------------------------------------------------------------ */
-
-* {
-  -webkit-tap-highlight-color: transparent;
-}
-
-html {
-  scroll-behavior: smooth;
-  color-scheme: dark;
-}
-
-body {
-  background-color: var(--color-zemin);
-  color: #e8edf7;
-  font-family: var(--font-sans);
-  -webkit-font-smoothing: antialiased;
-  overflow-x: hidden;
-}
-
-::selection {
-  background: rgb(59 130 246 / 0.35);
-}
-
-/* Ince, koyu kaydirma cubugu */
-::-webkit-scrollbar {
-  width: 10px;
-  height: 10px;
-}
-::-webkit-scrollbar-track {
-  background: #070b15;
-}
-::-webkit-scrollbar-thumb {
-  background: #1e293b;
-  border-radius: 999px;
-  border: 2px solid #070b15;
-}
-::-webkit-scrollbar-thumb:hover {
-  background: #334155;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  *,
-  *::before,
-  *::after {
-    animation-duration: 0.001ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.001ms !important;
-  }
+@layer base {
   html {
-    scroll-behavior: auto;
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
   }
-}
 
-/* ------------------------------------------------------------------ */
-/* Bilesen yardimcilari                                                */
-/* ------------------------------------------------------------------ */
-
-@utility cam {
-  background: linear-gradient(
-    155deg,
-    rgb(255 255 255 / 0.07) 0%,
-    rgb(255 255 255 / 0.025) 45%,
-    rgb(255 255 255 / 0.01) 100%
-  );
-  backdrop-filter: blur(14px) saturate(140%);
-  border: 1px solid rgb(255 255 255 / 0.09);
-}
-
-@utility cam-koyu {
-  background: rgb(8 12 22 / 0.78);
-  backdrop-filter: blur(18px) saturate(160%);
-  border: 1px solid rgb(255 255 255 / 0.07);
-}
-
-/* Kart kenarinda donen isik efekti (hover) */
-@utility isikli-kart {
-  position: relative;
-  isolation: isolate;
-  transition:
-    transform 0.35s cubic-bezier(0.16, 1, 0.3, 1),
-    border-color 0.35s ease,
-    box-shadow 0.35s ease;
-}
-
-@utility metin-gradyan {
-  background: linear-gradient(100deg, #ffffff 0%, #bfdbfe 40%, #a78bfa 75%, #ffffff 100%);
-  background-size: 200% auto;
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
-  animation: parla 6s linear infinite;
-}
-
-/* Mobilde yatay kaydirmali kategori seritleri icin */
-@utility kaydir-gizli {
-  scrollbar-width: none;
-  -ms-overflow-style: none;
-}
-.kaydir-gizli::-webkit-scrollbar {
-  display: none;
-}
-
-/* Odaklanma gorunumu (erisilebilirlik) */
-@utility odak-halka {
-  outline: 2px solid var(--color-vurgu-400);
-  outline-offset: 3px;
-}
-
-a:focus-visible,
-button:focus-visible,
-input:focus-visible,
-select:focus-visible,
-[tabindex]:focus-visible {
-  outline: 2px solid var(--color-vurgu-400);
-  outline-offset: 3px;
-  border-radius: 8px;
-}
-
-/* Yazdirma: sadece fiyat tablosu kalsin */
-@media print {
   body {
-    background: #fff;
-    color: #000;
+    background: var(--color-zemin);
+    color: var(--color-metin);
+    font-family: var(--font-sans);
+    /* Sayılar her satırda aynı genişlikte olsun — fiyat sütunları hizalı kalır */
+    font-variant-numeric: tabular-nums;
   }
+
+  /* Odak halkası: klavyeyle gezenler için görünür, fareyle tıklayanı rahatsız etmez */
+  :focus-visible {
+    outline: 2px solid var(--color-vurgu);
+    outline-offset: 2px;
+    border-radius: 4px;
+  }
+}
+
+@layer components {
+  /* Kart: gölge yok, yalnızca ince kenarlık */
+  .kart {
+    border: 1px solid var(--color-kenar);
+    border-radius: 10px;
+    background: var(--color-zemin);
+  }
+
+  /* Tıklanabilir kart — hover'da yalnızca kenarlık koyulaşır */
+  .kart-baglanti {
+    border: 1px solid var(--color-kenar);
+    border-radius: 10px;
+    background: var(--color-zemin);
+    transition: border-color 0.12s ease, background-color 0.12s ease;
+  }
+  .kart-baglanti:hover {
+    border-color: var(--color-metin);
+    background: var(--color-zemin-2);
+  }
+
+  /* Küçük etiket — stok durumu, rozet */
+  .etiket {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.125rem 0.5rem;
+    border-radius: 999px;
+    font-size: 0.75rem;
+    font-weight: 500;
+    line-height: 1.4;
+    white-space: nowrap;
+  }
+
+  /* Yatay kaydırılan şeritlerde kaydırma çubuğunu gizle */
+  .kaydir-gizli {
+    scrollbar-width: none;
+  }
+  .kaydir-gizli::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+/* Yazdırma: müşteri listeyi kâğıda döksün diye */
+@media print {
   .yazdirma-gizle {
     display: none !important;
   }
-  .cam,
-  .cam-koyu {
-    background: #fff !important;
-    border-color: #ddd !important;
-    backdrop-filter: none !important;
+
+  body {
+    background: #fff;
+  }
+
+  .kart,
+  .kart-baglanti {
+    border-color: #ccc;
   }
 }

@@ -1,61 +1,59 @@
 import { Mail, MapPin, MessageCircle, Phone } from "lucide-react";
 import type { Ayarlar } from "@/lib/tipler";
 
+/** WhatsApp numarasini wa.me baglantisina cevirir */
 function whatsappLinki(numara: string): string {
-  const temiz = numara.replace(/\D/g, "");
-  const uluslararasi = temiz.startsWith("90") ? temiz : `90${temiz.replace(/^0/, "")}`;
-  return `https://wa.me/${uluslararasi}`;
+  const rakamlar = numara.replace(/\D/g, "");
+  return `https://wa.me/${rakamlar}`;
 }
 
+/**
+ * Alt bilgi: yalnizca dolu olan iletisim kanallari gorunur.
+ * Hicbiri doldurulmamissa yalnizca telif satiri kalir.
+ */
 export function AltBilgi({ ayarlar }: { ayarlar: Ayarlar }) {
-  const iletisimVar = ayarlar.telefon || ayarlar.whatsapp || ayarlar.eposta || ayarlar.adres;
+  const kanallar = [
+    ayarlar.telefon && {
+      Ikon: Phone,
+      metin: ayarlar.telefon,
+      href: `tel:${ayarlar.telefon.replace(/\s/g, "")}`,
+    },
+    ayarlar.whatsapp && {
+      Ikon: MessageCircle,
+      metin: "WhatsApp",
+      href: whatsappLinki(ayarlar.whatsapp),
+    },
+    ayarlar.eposta && { Ikon: Mail, metin: ayarlar.eposta, href: `mailto:${ayarlar.eposta}` },
+    ayarlar.adres && { Ikon: MapPin, metin: ayarlar.adres, href: null },
+  ].filter(Boolean) as { Ikon: typeof Phone; metin: string; href: string | null }[];
 
   return (
-    <footer className="yazdirma-gizle mt-auto border-t border-white/[0.07] bg-black/25">
-      <div className="mx-auto w-full max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-        {iletisimVar ? (
-          <div className="flex flex-wrap items-center gap-x-6 gap-y-3 text-sm">
-            {ayarlar.telefon && (
-              <a
-                href={`tel:${ayarlar.telefon.replace(/\s/g, "")}`}
-                className="flex items-center gap-2 text-slate-300 transition hover:text-white"
-              >
-                <Phone className="size-4 text-vurgu-400" />
-                {ayarlar.telefon}
-              </a>
-            )}
-            {ayarlar.whatsapp && (
-              <a
-                href={whatsappLinki(ayarlar.whatsapp)}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center gap-2 text-slate-300 transition hover:text-emerald-300"
-              >
-                <MessageCircle className="size-4 text-emerald-400" />
-                WhatsApp&apos;tan sorun
-              </a>
-            )}
-            {ayarlar.eposta && (
-              <a
-                href={`mailto:${ayarlar.eposta}`}
-                className="flex items-center gap-2 text-slate-300 transition hover:text-white"
-              >
-                <Mail className="size-4 text-vurgu-400" />
-                {ayarlar.eposta}
-              </a>
-            )}
-            {ayarlar.adres && (
-              <span className="flex items-center gap-2 text-slate-400">
-                <MapPin className="size-4 text-slate-500" />
-                {ayarlar.adres}
-              </span>
-            )}
+    <footer className="yazdirma-gizle mt-auto border-t border-kenar">
+      <div className="mx-auto w-full max-w-5xl px-4 py-8 sm:px-6">
+        {kanallar.length > 0 && (
+          <div className="mb-5 flex flex-wrap gap-x-6 gap-y-2.5">
+            {kanallar.map(({ Ikon, metin, href }) => {
+              const icerik = (
+                <span className="flex items-center gap-2 text-sm text-metin-2">
+                  <Ikon className="size-4 shrink-0 text-metin-3" strokeWidth={1.75} />
+                  {metin}
+                </span>
+              );
+              return href ? (
+                <a key={metin} href={href} className="transition hover:text-metin">
+                  {icerik}
+                </a>
+              ) : (
+                <span key={metin}>{icerik}</span>
+              );
+            })}
           </div>
-        ) : null}
+        )}
 
-        <p className="mt-6 text-xs leading-relaxed text-slate-500">{ayarlar.uyariMetni}</p>
-        <p className="mt-3 text-xs text-slate-600">
-          &copy; {new Date().getFullYear()} {ayarlar.firmaAdi}
+        <p className="max-w-2xl text-xs leading-relaxed text-metin-3">{ayarlar.uyariMetni}</p>
+
+        <p className="mt-4 text-xs text-metin-3">
+          © {new Date().getFullYear()} {ayarlar.firmaAdi}
         </p>
       </div>
     </footer>
