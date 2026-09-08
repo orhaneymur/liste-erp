@@ -1,0 +1,37 @@
+{{/*
+Sitenin çalışma anında okuduğu ayarlar.
+
+Ortam değişkeni olarak verilir (src/lib/veri.ts -> ayarlarOku).
+Sayesinde firma adını, telefonu veya hangi fiyatın görüneceğini
+değiştirmek için imaj derlemeye gerek kalmaz — helm upgrade yeter.
+
+DİKKAT: bool alanlarda Helm'in "default" fonksiyonu KULLANILMAZ; o
+fonksiyon false değerini de boş sayıp varsayılana çevirir, böylece
+toptanGoster: false yazan müşteride toptan fiyat yine görünürdü.
+Bunun yerine değerin tanımsız olup olmadığına bakılır.
+*/}}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "teknikfiyat.configName" . }}
+  labels:
+    {{- include "teknikfiyat.labels" . | nindent 4 }}
+data:
+  ERP_API_URL: {{ .Values.erp.servis | quote }}
+  LISTE_TAZELEME_SANIYE: {{ .Values.erp.tazelemeSaniye | default 60 | quote }}
+
+  FIRMA_ADI: {{ required "tenant.firmaAdi zorunludur" .Values.tenant.firmaAdi | quote }}
+  SLOGAN: {{ .Values.tenant.slogan | default "" | quote }}
+  TELEFON: {{ .Values.tenant.telefon | default "" | quote }}
+  WHATSAPP: {{ .Values.tenant.whatsapp | default "" | quote }}
+  EPOSTA: {{ .Values.tenant.eposta | default "" | quote }}
+  ADRES: {{ .Values.tenant.adres | default "" | quote }}
+  UYARI: {{ .Values.tenant.uyari | default "" | quote }}
+
+  TOPTAN_GOSTER: {{ if kindIs "invalid" .Values.tenant.toptanGoster }}"1"{{ else }}{{ ternary "1" "0" .Values.tenant.toptanGoster | quote }}{{ end }}
+  PERAKENDE_GOSTER: {{ if kindIs "invalid" .Values.tenant.perakendeGoster }}"1"{{ else }}{{ ternary "1" "0" .Values.tenant.perakendeGoster | quote }}{{ end }}
+  KDV_DAHIL: {{ if kindIs "invalid" .Values.tenant.kdvDahil }}"0"{{ else }}{{ ternary "1" "0" .Values.tenant.kdvDahil | quote }}{{ end }}
+
+  KDV_ORANI: {{ .Values.tenant.kdvOrani | default 20 | quote }}
+  USD_KURU: {{ .Values.tenant.usdKuru | default 0 | quote }}
+  EUR_KURU: {{ .Values.tenant.eurKuru | default 0 | quote }}

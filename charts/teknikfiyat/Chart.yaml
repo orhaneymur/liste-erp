@@ -1,0 +1,11 @@
+apiVersion: v2
+name: teknikfiyat
+description: Fiyat Listesi — ERP'nin yanında kurulan, müşterinin kendi müşterilerine gönderdiği açık fiyat sitesi
+type: application
+
+# Chart sürümü — chart dosyalarını her değiştirdiğinde artır.
+version: 1.0.0
+
+# Varsayılan uygulama sürümü. values.yaml içindeki image.tag bunu ezer.
+# k8s/build-images.sh bu satırı imaj etiketiyle eşitler.
+appVersion: "v1.0.0"

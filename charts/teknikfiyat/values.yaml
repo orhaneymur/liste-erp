@@ -1,0 +1,109 @@
+# Fiyat Listesi — müşteri (tenant) başına kurulum
+#
+# Bu chart TeknikERP'nin chart'ından AYRIDIR ve kendi deposunda durur.
+# İkisi aynı namespace'te yaşar ama ayrı helm release'idir:
+#
+#   helm upgrade teknikerp   -n tenant-shenzhen   → ERP
+#   helm upgrade teknikfiyat -n tenant-shenzhen   → fiyat listesi
+#
+# Böylece birine sürüm atmak diğerini hiç etkilemez.
+
+# ── Müşteri ────────────────────────────────────────────────────────────────
+tenant:
+  # Namespace kısa adı — ERP ile AYNI olmalı (tenant-<id>).
+  id: ""
+
+  # Sayfada ve tarayıcı sekmesinde görünen firma adı.
+  firmaAdi: ""
+
+  # Başlığın altındaki tanıtım cümlesi. Boşsa hazır metin yazılır.
+  slogan: ""
+
+  # Alt bilgideki iletişim kanalları. Boş bırakılan hiç görünmez.
+  telefon: ""
+  whatsapp: ""
+  eposta: ""
+  adres: ""
+
+  # Fiyat tablosunun altındaki uyarı. Boşsa hazır metin yazılır.
+  uyari: ""
+
+  # Hangi fiyat sütunu müşterinin müşterisine gösterilsin?
+  # Toptan fiyatını gizlemek isteyen müşteri için toptanGoster: false.
+  toptanGoster: true
+  perakendeGoster: true
+
+  # ERP fiyatları KDV hariç tutar.
+  kdvDahil: false
+  kdvOrani: 20
+
+  # 0 ise TL karşılığı YAZILMAZ. Elle güncellenen bir kur eskidiğinde
+  # sessizce yanlış fiyat göstermesin diye varsayılan böyle.
+  usdKuru: 0
+  eurKuru: 0
+
+# ── ERP bağlantısı ─────────────────────────────────────────────────────────
+erp:
+  # Aynı namespace'teki ERP backend'i. Servis adı tüm müşterilerde aynı
+  # olduğu için bu değer genelde hiç değiştirilmez.
+  #
+  # ERP kurulu DEĞİLSE bu site çalışmaz: fiyat listesi ERP'nin yanında
+  # verilen ücretsiz bir eklentidir, tek başına satılmaz.
+  servis: "http://teknikerp-backend:3000"
+
+  # Listenin tazelenme aralığı (saniye). ERP ucu da kendi içinde bir
+  # dakika önbellek tutar; fiyat değişikliği siteye en geç iki dakikada
+  # yansır.
+  tazelemeSaniye: 60
+
+# ── İmaj ───────────────────────────────────────────────────────────────────
+image:
+  registry: since1907
+  repository: teknikfiyat
+  tag: "v1.0.0"
+  pullPolicy: IfNotPresent
+
+# ── Uygulama ───────────────────────────────────────────────────────────────
+replicas: 1
+
+# Next.js standalone sunucusu. Uygulama hiçbir veri saklamaz, tüm iş
+# ERP'den gelen listeyi biçimlendirmektir — bu yüzden istekler düşük.
+resources:
+  requests:
+    memory: 96Mi
+    cpu: 50m
+  limits:
+    memory: 384Mi
+    cpu: 500m
+
+# ── Alan adı ───────────────────────────────────────────────────────────────
+ingress:
+  enabled: true
+  # k3s'te 80/443 portlarını traefik tutuyor (bkz. ERP chart'ı).
+  className: "traefik"
+
+  # Müşterinin KENDİ alan adı — ör. "liste.shenzhenmarket.com.tr".
+  # Boş bırakılırsa aşağıdaki kalıptan üretilir.
+  host: ""
+
+  tls:
+    # Küme içinde sertifika ÜRETİLMEZ (cert-manager kurulu değil).
+    # HTTPS'i Cloudflare sonlandırır.
+    enabled: false
+    clusterIssuer: "letsencrypt-prod"
+    edgeTerminated: true
+
+domain:
+  # ingress.host boşsa adres şöyle olur:  <tenant.id><tenantSuffix>.<base>
+  #   shenzhen -> shenzhen-liste.derneklab.com
+  #
+  # NEDEN NOKTA DEĞİL TİRE?
+  # Cloudflare'in ücretsiz sertifikası "derneklab.com" ve
+  # "*.derneklab.com"u kapsar — TEK seviye. "liste.shenzhen.derneklab.com"
+  # iki seviye olduğu için kapsam dışında kalır ve site HTTPS'te hiç
+  # açılmaz.
+  #
+  # Müşterinin kendi alan adında bu sorun yoktur:
+  # "liste.shenzhenmarket.com.tr" tek seviyedir.
+  base: derneklab.com
+  tenantSuffix: "-liste"

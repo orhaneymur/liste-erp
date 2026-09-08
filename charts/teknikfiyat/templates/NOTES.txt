@@ -1,0 +1,29 @@
+Fiyat Listesi — "{{ .Values.tenant.firmaAdi }}" kuruldu.
+
+  Adres    : http{{ if or .Values.ingress.tls.enabled .Values.ingress.tls.edgeTerminated }}s{{ end }}://{{ include "teknikfiyat.host" . }}
+  Namespace: {{ .Release.Namespace }}
+  Surum    : {{ .Values.image.tag }}
+
+  Bu sayfa HERKESE ACIKTIR — giris istemez. Musteri linki kendi
+  musterilerine gonderir.
+
+  Veri kaynagi: {{ .Values.erp.servis }}
+  Site hicbir veri saklamaz; listeyi ERP'den alir. ERP ayakta degilse
+  sayfa "liste su an acilamadi" der.
+
+  Durum kontrolu:
+
+    kubectl get pods -n {{ .Release.Namespace }} -l app=teknikfiyat
+    kubectl logs  -n {{ .Release.Namespace }} deploy/teknikfiyat
+
+  Ayar degistirmek (imaj derlemeye gerek yok):
+
+    helm upgrade teknikfiyat charts/teknikfiyat -n {{ .Release.Namespace }} \
+      --reuse-values --set tenant.telefon="0212 000 00 00"
+
+{{- if not .Values.ingress.host }}
+
+  NOT: Musterinin kendi alan adi verilmedi; adres kaliptan uretildi.
+  Kendi alan adi icin:  --set ingress.host=liste.<musteri-alanadi>
+  (Once Cloudflare'de A kaydi: liste -> 213.238.168.227, Proxied)
+{{- end }}
