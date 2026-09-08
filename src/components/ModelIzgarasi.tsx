@@ -3,7 +3,6 @@
 import { useMemo, useState } from "react";
 import Link from "next/link";
 import { ChevronRight, Search } from "lucide-react";
-import { paraBicimle } from "@/lib/bicim";
 import { sadeMetin } from "@/lib/slug";
 import type { ModelOzeti } from "@/lib/tipler";
 
@@ -12,7 +11,9 @@ import type { ModelOzeti } from "@/lib/tipler";
  *
  * Bir markanin bir kategorisinde yuzlerce model olabiliyor; liste duzeni
  * kart izgarasindan daha hizli taranir, goz tek sutunda asagi iner.
- * Sagda en dusuk fiyat duruyor — musteri cogu zaman ona bakip giriyor.
+ *
+ * Fiyat BILEREK gosterilmiyor (karar 8 Eylul 2026): bu adimda yalnizca
+ * model secilir, fiyatlar bir sonraki ekranda kalite kalite acilir.
  */
 export function ModelIzgarasi({
   markaSlug,
@@ -66,15 +67,6 @@ export function ModelIzgarasi({
                     {model.cesitSayisi} seçenek
                   </span>
                 </span>
-
-                {model.enUcuz !== null && (
-                  <span className="shrink-0 text-right">
-                    <span className="rakam block font-mono text-sm text-metin">
-                      {paraBicimle(model.enUcuz, model.paraBirimi)}
-                    </span>
-                    <span className="block text-[11px] text-metin-3">en düşük</span>
-                  </span>
-                )}
 
                 <ChevronRight className="size-4 shrink-0 text-metin-3" />
               </Link>

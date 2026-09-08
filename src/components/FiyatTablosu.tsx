@@ -16,6 +16,10 @@ import type { Ayarlar, FiyatSatiri } from "@/lib/tipler";
  * zeminle ayrilir; gradyanin sayfadaki uc kullanim yerinden biri budur.
  *
  * Stok yalnizca Var/Yok gosterir; ERP adet vermez.
+ *
+ * STOKTA OLMAYANIN FIYATI GOSTERILMEZ (karar 8 Eylul 2026): satir listede
+ * kalir — musteri parcanin var oldugunu bilsin — ama fiyat yerine cizgi
+ * durur ve satir listenin sonuna duser. Kopyalanan metne de fiyatsiz gecer.
  */
 
 type Siralama = "ucuz" | "pahali" | "ad";
@@ -52,15 +56,26 @@ export function FiyatTablosu({
   const liste = useMemo(() => {
     const kopya = [...satirlar];
     const anahtar = (s: FiyatSatiri) => s.toptan ?? s.perakende ?? 0;
-    if (siralama === "ucuz") kopya.sort((a, b) => anahtar(a) - anahtar(b));
-    else if (siralama === "pahali") kopya.sort((a, b) => anahtar(b) - anahtar(a));
-    else kopya.sort((a, b) => a.kalite.localeCompare(b.kalite, "tr"));
+    const yokMu = (s: FiyatSatiri) => (s.stok === "Yok" ? 1 : 0);
+
+    kopya.sort((a, b) => {
+      // Fiyati gorunmeyen satirlar arada durmasin, sona dussun
+      const stokFarki = yokMu(a) - yokMu(b);
+      if (stokFarki !== 0) return stokFarki;
+
+      if (siralama === "ucuz") return anahtar(a) - anahtar(b);
+      if (siralama === "pahali") return anahtar(b) - anahtar(a);
+      return a.kalite.localeCompare(b.kalite, "tr");
+    });
     return kopya;
   }, [satirlar, siralama]);
 
   /** Listeyi WhatsApp'a yapistirilabilir duz metin olarak kopyalar */
   const kopyala = async () => {
     const satirMetni = liste.map((s) => {
+      // Stokta olmayanin fiyati kopyalanan metne de girmez
+      if (s.stok === "Yok") return `${s.kalite}  (stokta yok)`;
+
       const fiyatlar = [
         toptanVar && s.toptan !== null
           ? `Toptan ${paraBicimle(fiyatla(s.toptan), s.paraBirimi)}`
@@ -71,7 +86,7 @@ export function FiyatTablosu({
       ]
         .filter(Boolean)
         .join("  ");
-      return `${s.kalite}  ${fiyatlar}${s.stok === "Yok" ? "  (stokta yok)" : ""}`;
+      return `${s.kalite}  ${fiyatlar}`;
     });
 
     const metin = [
@@ -179,7 +194,8 @@ export function FiyatTablosu({
                 ayarlar.usdKuru,
                 ayarlar.eurKuru,
               );
-              const enUygun = satir.enUcuzMu && liste.length > 1;
+              const stokYok = satir.stok === "Yok";
+              const enUygun = satir.enUcuzMu && !stokYok && liste.length > 1;
 
               return (
                 <tr
@@ -215,7 +231,7 @@ export function FiyatTablosu({
 
                   {toptanVar && (
                     <td className="whitespace-nowrap px-3 py-3.5 text-right">
-                      {toptan === null ? (
+                      {stokYok || toptan === null ? (
                         <span className="text-metin-3">—</span>
                       ) : (
                         <>
@@ -234,7 +250,7 @@ export function FiyatTablosu({
 
                   {perakendeVar && (
                     <td className="whitespace-nowrap px-3 py-3.5 text-right">
-                      {perakende === null ? (
+                      {stokYok || perakende === null ? (
                         <span className="text-metin-3">—</span>
                       ) : (
                         <span className="rakam font-mono text-sm text-metin-2">

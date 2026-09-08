@@ -3,7 +3,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { LoaderCircle, Search, X } from "lucide-react";
-import { paraBicimle } from "@/lib/bicim";
 import type { AramaSonucu } from "@/lib/veri";
 
 /**
@@ -145,11 +144,6 @@ export function Arama() {
                               {kategori.ad} · {kategori.adet} seçenek
                             </span>
                           </span>
-                          {sonuc.enUcuz !== null && (
-                            <span className="rakam shrink-0 font-mono text-sm text-metin-2">
-                              {paraBicimle(sonuc.enUcuz, "USD")}
-                            </span>
-                          )}
                         </Link>
                       </li>
                     )),

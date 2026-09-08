@@ -102,10 +102,18 @@ function satirAdi(u: ApiUrun): string {
   return parcalar.join(" · ") || "Standart";
 }
 
+/**
+ * Fiyat araligi — YALNIZCA stokta olan urunler sayilir.
+ *
+ * Karar 8 Eylul 2026: stokta olmayan urunun fiyati musteriye
+ * gosterilmiyor. Gosterilmeyen bir fiyat "en uygun" secilemez, aksi
+ * halde tabloda fiyati gizli bir satir en uygun isaretlenirdi.
+ */
 function fiyatAraligi(urunler: Urun[]): { enUcuz: number | null; enPahali: number | null } {
   let enUcuz: number | null = null;
   let enPahali: number | null = null;
   for (const u of urunler) {
+    if (u.stok === "Yok") continue;
     const f = u.toptan ?? u.perakende;
     if (typeof f !== "number" || f <= 0) continue;
     if (enUcuz === null || f < enUcuz) enUcuz = f;
