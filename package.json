@@ -1,0 +1,30 @@
+{
+  "name": "fiyat-liste",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Telefon yedek parca toptan/perakende fiyat listesi - musteriye link olarak gonderilebilen web uygulamasi",
+  "scripts": {
+    "dev": "next dev -p 3000",
+    "build": "next build",
+    "start": "next start -p 3000",
+    "logolar": "node scripts/logolari-hazirla.mjs",
+    "test": "node scripts/test-akis.mjs",
+    "postinstall": "node scripts/logolari-hazirla.mjs"
+  },
+  "dependencies": {
+    "exceljs": "^4.4.0",
+    "lucide-react": "^1.42.0",
+    "next": "^16.3.4",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4.3.3",
+    "@types/node": "^24.0.0",
+    "@types/react": "^19.2.0",
+    "@types/react-dom": "^19.2.0",
+    "simple-icons": "^16.30.0",
+    "tailwindcss": "^4.3.3",
+    "typescript": "~5.9.0"
+  }
+}

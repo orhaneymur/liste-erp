@@ -1,0 +1,16 @@
+node_modules
+.next
+out
+build
+.env
+.env.local
+*.log
+dev-log.txt
+dev-hata.txt
+.DS_Store
+next-env.d.ts
+tsconfig.tsbuildinfo
+
+# Fiyat verisi: canlida kalici diskte durur, repoya girmez
+# (ilk acilista src/lib/ornek-veri.ts uretir)
+veri/
