@@ -9,7 +9,6 @@ import type { AramaSonucu } from "@/lib/veri";
 /**
  * Model arama. Marka ve kategori adimlarini atlayip dogrudan modele
  * gitmek icin — telefondan bakan tamirci genelde model adini biliyor.
- *
  * Ctrl+K ile acilir, Esc ile kapanir.
  */
 export function Arama() {
@@ -83,20 +82,19 @@ export function Arama() {
       <button
         type="button"
         onClick={() => setAcik(true)}
-        className="flex items-center gap-2 rounded-lg border border-kenar px-3 py-1.5 text-sm text-metin-3 transition hover:border-metin hover:text-metin"
+        className="yuzey flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-metin-2 transition hover:border-kenar-parlak hover:bg-yuzey-2 hover:text-metin"
       >
         <Search className="size-4" />
         <span className="hidden sm:inline">Model ara</span>
+        <kbd className="ml-1 hidden rounded border border-kenar px-1.5 py-px font-mono text-[10px] text-metin-3 sm:inline">
+          Ctrl K
+        </kbd>
       </button>
 
       {acik && (
-        <div
-          className="fixed inset-0 z-50 bg-metin/20"
-          onClick={kapat}
-          role="presentation"
-        >
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm" onClick={kapat} role="presentation">
           <div
-            className="mx-auto mt-[12vh] w-[92%] max-w-xl overflow-hidden rounded-xl border border-kenar bg-zemin shadow-lg"
+            className="mx-auto mt-[11vh] w-[92%] max-w-xl overflow-hidden rounded-2xl border border-kenar bg-zemin-2 shadow-2xl"
             onClick={(o) => o.stopPropagation()}
           >
             <div className="flex items-center gap-3 border-b border-kenar px-4">
@@ -107,7 +105,7 @@ export function Arama() {
                 value={sorgu}
                 onChange={(o) => setSorgu(o.target.value)}
                 placeholder="Model adı yazın — iPhone 11, A53, Redmi Note 12…"
-                className="w-full bg-transparent py-3.5 text-sm text-metin placeholder:text-metin-3 focus:outline-none"
+                className="w-full bg-transparent py-4 text-sm text-metin placeholder:text-metin-3 focus:outline-none"
               />
               {yukleniyor && <LoaderCircle className="size-4 shrink-0 animate-spin text-metin-3" />}
               <button
@@ -122,11 +120,11 @@ export function Arama() {
 
             <div className="max-h-[60vh] overflow-y-auto">
               {sorgu.trim().length < 2 ? (
-                <p className="px-4 py-8 text-center text-sm text-metin-3">
+                <p className="px-4 py-10 text-center text-sm text-metin-3">
                   Aramak için en az iki harf yazın.
                 </p>
               ) : sonuclar.length === 0 && !yukleniyor ? (
-                <p className="px-4 py-8 text-center text-sm text-metin-3">
+                <p className="px-4 py-10 text-center text-sm text-metin-3">
                   &ldquo;{sorgu}&rdquo; için model bulunamadı.
                 </p>
               ) : (
@@ -137,7 +135,7 @@ export function Arama() {
                         <Link
                           href={`/marka/${sonuc.markaSlug}/${kategori.slug}/${sonuc.modelSlug}`}
                           onClick={kapat}
-                          className="flex items-center gap-3 px-4 py-2.5 transition hover:bg-zemin-2"
+                          className="flex items-center gap-3 px-4 py-3 transition hover:bg-yuzey"
                         >
                           <span className="min-w-0 flex-1">
                             <span className="block truncate text-sm text-metin">
@@ -148,7 +146,7 @@ export function Arama() {
                             </span>
                           </span>
                           {sonuc.enUcuz !== null && (
-                            <span className="shrink-0 text-sm text-metin-2">
+                            <span className="rakam shrink-0 font-mono text-sm text-metin-2">
                               {paraBicimle(sonuc.enUcuz, "USD")}
                             </span>
                           )}

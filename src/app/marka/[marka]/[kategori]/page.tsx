@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { AdimCubugu } from "@/components/AdimCubugu";
 import { kategoriGorunumu } from "@/components/KategoriIkonu";
+import { MarkaLogosu } from "@/components/MarkaLogosu";
 import { ModelIzgarasi } from "@/components/ModelIzgarasi";
 import { kategoriAdi, markaAdi, modeller } from "@/lib/veri";
 
@@ -21,7 +22,7 @@ export default async function KategoriSayfasi({ params }: Parametreler) {
   if (!mAd || !kAd) notFound();
 
   const liste = await modeller(marka, kategori);
-  const { Ikon } = kategoriGorunumu(kAd);
+  const { Ikon, renk } = kategoriGorunumu(kAd);
 
   return (
     <div>
@@ -32,13 +33,21 @@ export default async function KategoriSayfasi({ params }: Parametreler) {
         ]}
       />
 
-      <header className="mb-5 flex items-center gap-3">
-        <Ikon className="size-6 shrink-0 text-metin-2" strokeWidth={1.5} />
+      <header className="mb-6 flex items-center gap-4">
+        <span
+          className={`relative flex size-14 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br ${renk}`}
+        >
+          <Ikon className="size-7 text-white" strokeWidth={1.7} />
+          <span className="absolute -bottom-1.5 -right-1.5 flex size-7 items-center justify-center rounded-lg bg-white/90 p-1">
+            <MarkaLogosu marka={mAd} />
+          </span>
+        </span>
         <div>
-          <h1 className="text-xl font-semibold tracking-tight text-metin">
+          <p className="etiket">Model</p>
+          <h1 className="mt-1 text-2xl font-semibold tracking-tight text-metin">
             {mAd} {kAd}
           </h1>
-          <p className="text-sm text-metin-3">{liste.length} model</p>
+          <p className="mt-0.5 text-sm text-metin-3">{liste.length} model</p>
         </div>
       </header>
 

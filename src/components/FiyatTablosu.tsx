@@ -9,11 +9,13 @@ import type { Ayarlar, FiyatSatiri } from "@/lib/tipler";
  * Fiyat tablosu (4. adim) — sayfanin asil isi.
  *
  * Duzen bilerek tablo: musteri fiyatlari alt alta karsilastiriyor, o
- * yuzden sayilar sag hizali ve esit genislikte (globals.css'te
- * tabular-nums). Kart izgarasi bu isi zorlastiriyordu.
+ * yuzden rakamlar mono, sag hizali ve esit genislikte. Toptan parlak ve
+ * kalin, perakende daha sakin — goz once dogru sutuna gidiyor.
  *
- * Ucuncu bir sutun olarak stok yalnizca Var/Yok gosterir; ERP adet
- * vermez.
+ * En uygun satir hem sol kenarindaki gradyan seritle hem hafif mavi
+ * zeminle ayrilir; gradyanin sayfadaki uc kullanim yerinden biri budur.
+ *
+ * Stok yalnizca Var/Yok gosterir; ERP adet vermez.
  */
 
 type Siralama = "ucuz" | "pahali" | "ad";
@@ -40,7 +42,7 @@ export function FiyatTablosu({
   const toptanVar = ayarlar.toptanGoster;
   const perakendeVar = ayarlar.perakendeGoster;
 
-  /** KDV secilmisse fiyata oran eklenir (ERP fiyatlari KDV haric tutar) */
+  /** KDV secilmisse oran eklenir (ERP fiyatlari KDV haric tutar) */
   const fiyatla = (deger: number | null): number | null => {
     if (deger === null) return null;
     if (!kdvli || ayarlar.kdvDahil) return deger;
@@ -60,7 +62,9 @@ export function FiyatTablosu({
   const kopyala = async () => {
     const satirMetni = liste.map((s) => {
       const fiyatlar = [
-        toptanVar && s.toptan !== null ? `Toptan ${paraBicimle(fiyatla(s.toptan), s.paraBirimi)}` : "",
+        toptanVar && s.toptan !== null
+          ? `Toptan ${paraBicimle(fiyatla(s.toptan), s.paraBirimi)}`
+          : "",
         perakendeVar && s.perakende !== null
           ? `Perakende ${paraBicimle(fiyatla(s.perakende), s.paraBirimi)}`
           : "",
@@ -87,7 +91,7 @@ export function FiyatTablosu({
 
   if (!satirlar.length) {
     return (
-      <p className="kart p-8 text-center text-sm text-metin-3">
+      <p className="yuzey rounded-kart p-10 text-center text-sm text-metin-3">
         Bu model için yayınlanmış fiyat yok.
       </p>
     );
@@ -97,15 +101,16 @@ export function FiyatTablosu({
     <section>
       {/* Araç çubuğu */}
       <div className="yazdirma-gizle mb-3 flex flex-wrap items-center gap-2">
-        <div className="flex rounded-lg border border-kenar p-0.5">
+        <div className="yuzey flex rounded-lg p-1">
           {SIRALAMALAR.map(({ deger, etiket }) => (
             <button
               key={deger}
               type="button"
               onClick={() => setSiralama(deger)}
-              className={`rounded-md px-2.5 py-1 text-xs font-medium transition ${
+              aria-pressed={siralama === deger}
+              className={`rounded-md px-2.5 py-1 text-xs transition ${
                 siralama === deger
-                  ? "bg-metin text-white"
+                  ? "bg-yuzey-2 font-medium text-metin shadow-[inset_0_1px_0_var(--color-kenar-parlak)]"
                   : "text-metin-2 hover:text-metin"
               }`}
             >
@@ -118,10 +123,11 @@ export function FiyatTablosu({
           <button
             type="button"
             onClick={() => setKdvli((v) => !v)}
-            className={`rounded-lg border px-2.5 py-1.5 text-xs font-medium transition ${
+            aria-pressed={kdvli}
+            className={`rounded-lg border px-2.5 py-1.5 text-xs transition ${
               kdvli
-                ? "border-metin bg-metin text-white"
-                : "border-kenar text-metin-2 hover:border-metin hover:text-metin"
+                ? "border-mavi/50 bg-mavi/15 text-[#bcd3ff]"
+                : "border-kenar bg-yuzey text-metin-2 hover:border-kenar-parlak hover:text-metin"
             }`}
           >
             %{ayarlar.kdvOrani} KDV {kdvli ? "dahil" : "hariç"}
@@ -131,32 +137,32 @@ export function FiyatTablosu({
         <button
           type="button"
           onClick={kopyala}
-          className="ml-auto flex items-center gap-1.5 rounded-lg border border-kenar px-2.5 py-1.5 text-xs font-medium text-metin-2 transition hover:border-metin hover:text-metin"
+          className="yuzey ml-auto flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs text-metin-2 transition hover:border-kenar-parlak hover:text-metin"
         >
-          {kopyalandi ? <Check className="size-3.5" /> : <Copy className="size-3.5" />}
+          {kopyalandi ? <Check className="size-3.5 text-var" /> : <Copy className="size-3.5" />}
           {kopyalandi ? "Kopyalandı" : "Listeyi kopyala"}
         </button>
       </div>
 
       {/* Tablo */}
-      <div className="kart overflow-x-auto">
+      <div className="yuzey overflow-x-auto rounded-kart">
         <table className="w-full text-sm">
           <thead>
-            <tr className="border-b border-kenar text-left">
-              <th scope="col" className="px-4 py-2.5 text-xs font-medium text-metin-3">
+            <tr className="border-b border-kenar">
+              <th scope="col" className="etiket px-4 py-3 text-left text-[10.5px]">
                 Ürün
               </th>
               {toptanVar && (
-                <th scope="col" className="px-3 py-2.5 text-right text-xs font-medium text-metin-3">
+                <th scope="col" className="etiket px-3 py-3 text-right text-[10.5px]">
                   Toptan
                 </th>
               )}
               {perakendeVar && (
-                <th scope="col" className="px-3 py-2.5 text-right text-xs font-medium text-metin-3">
+                <th scope="col" className="etiket px-3 py-3 text-right text-[10.5px]">
                   Perakende
                 </th>
               )}
-              <th scope="col" className="px-4 py-2.5 text-right text-xs font-medium text-metin-3">
+              <th scope="col" className="etiket px-4 py-3 text-right text-[10.5px]">
                 Stok
               </th>
             </tr>
@@ -166,44 +172,58 @@ export function FiyatTablosu({
             {liste.map((satir, indeks) => {
               const toptan = fiyatla(satir.toptan);
               const perakende = fiyatla(satir.perakende);
-              // Kur 0 ise null doner ve TL satiri hic yazilmaz
+              // Kur 0 ise null döner ve TL satırı hiç yazılmaz
               const tlSayi = tlKarsiligi(
                 toptan,
                 satir.paraBirimi,
                 ayarlar.usdKuru,
                 ayarlar.eurKuru,
               );
+              const enUygun = satir.enUcuzMu && liste.length > 1;
 
               return (
-                <tr key={satir.stokKodu ?? satir.kalite + indeks} className="align-top">
-                  <td className="px-4 py-3">
+                <tr
+                  key={satir.stokKodu ?? satir.kalite + indeks}
+                  className={`align-top transition ${
+                    enUygun ? "bg-mavi/5" : "hover:bg-white/[0.022]"
+                  }`}
+                >
+                  <td className="relative px-4 py-3.5">
+                    {enUygun && (
+                      <span
+                        aria-hidden
+                        className="absolute inset-y-0 left-0 w-[3px] bg-gradient-to-b from-mavi to-mor"
+                      />
+                    )}
                     <span className="flex flex-wrap items-center gap-x-2 gap-y-1">
-                      <span className="font-medium text-metin">{satir.kalite}</span>
-                      {satir.enUcuzMu && liste.length > 1 && (
-                        <span className="etiket bg-vurgu-hafif text-vurgu">en uygun</span>
+                      <span className="text-[14.5px] font-medium text-metin">{satir.kalite}</span>
+                      {enUygun && (
+                        <span className="etiket rounded border border-mavi/30 bg-mavi/15 px-1.5 py-0.5 text-[9.5px] text-[#bcd3ff]">
+                          en uygun
+                        </span>
                       )}
                     </span>
                     {satir.stokKodu && (
-                      <span className="mt-0.5 block font-mono text-xs text-metin-3">
+                      <span className="mt-1 block font-mono text-[11.5px] text-metin-3">
                         {satir.stokKodu}
                       </span>
                     )}
                     {satir.not && (
-                      <span className="mt-0.5 block text-xs text-metin-2">{satir.not}</span>
+                      <span className="mt-1 block text-xs text-metin-2">{satir.not}</span>
                     )}
                   </td>
 
                   {toptanVar && (
-                    <td className="whitespace-nowrap px-3 py-3 text-right">
+                    <td className="whitespace-nowrap px-3 py-3.5 text-right">
                       {toptan === null ? (
                         <span className="text-metin-3">—</span>
                       ) : (
                         <>
-                          <span className="font-medium text-metin">
+                          <span className="rakam font-mono text-[15.5px] font-semibold tracking-tight text-metin">
                             {paraBicimle(toptan, satir.paraBirimi)}
                           </span>
                           {tlSayi !== null && (
-                            <span className="block text-xs text-metin-3">
+                            <span className="rakam mt-0.5 block font-mono text-[11.5px] text-metin-3">
                               ≈ {paraBicimle(tlSayi, "TRY")}
                             </span>
                           )}
@@ -213,25 +233,24 @@ export function FiyatTablosu({
                   )}
 
                   {perakendeVar && (
-                    <td className="whitespace-nowrap px-3 py-3 text-right">
+                    <td className="whitespace-nowrap px-3 py-3.5 text-right">
                       {perakende === null ? (
                         <span className="text-metin-3">—</span>
                       ) : (
-                        <span className="text-metin-2">
+                        <span className="rakam font-mono text-sm text-metin-2">
                           {paraBicimle(perakende, satir.paraBirimi)}
                         </span>
                       )}
                     </td>
                   )}
 
-                  <td className="whitespace-nowrap px-4 py-3 text-right">
+                  <td className="whitespace-nowrap px-4 py-3.5 text-right">
                     <span
-                      className={`etiket ${
-                        satir.stok === "Yok"
-                          ? "bg-yok-hafif text-yok"
-                          : "bg-var-hafif text-var"
+                      className={`inline-flex items-center gap-1.5 rounded-full py-1 pl-2 pr-2.5 text-xs font-medium ${
+                        satir.stok === "Yok" ? "bg-yok/12 text-yok" : "bg-var/12 text-var"
                       }`}
                     >
+                      <span className="size-1.5 rounded-full bg-current" />
                       {satir.stok}
                     </span>
                   </td>

@@ -1,41 +1,46 @@
 @import "tailwindcss";
 
 /*
- * Fiyat listesi teması.
+ * Fiyat listesi teması — koyu.
  *
- * Açık zemin, ince çizgiler, tek vurgu rengi. Gradyan, parlama, blur ve
- * animasyon YOK — üçü de hem "üretilmiş arayüz" görüntüsü veriyordu hem
- * de mobilde kaydırmayı ağırlaştırıyordu.
+ * Yön: derin lacivert zemin, mavi-mor aksan, renkli kategori ikonları.
+ * Gradyan bilerek ÜÇ noktayla sınırlı (amblem, ana başlık, en uygun
+ * satırın sol şeridi); her yerde tekrarlandığında hiçbiri vurgu olmuyor.
  *
- * Amaç ticari bir fiyat listesi gibi durmak: sayılar hizalı, hiyerarşi
- * tipografiyle kuruluyor, renk yalnızca anlam taşıdığı yerde var
- * (stok durumu, en uygun fiyat).
+ * Koyu temada derinliği gölge değil, yüzeyin üst kenarındaki ince ışık
+ * çizgisi verir — kartlarda box-shadow yerine inset kullanılır.
+ *
+ * Giriş animasyonu YOK: hem mobilde kaydırmayı takıyordu hem de sayfanın
+ * ilk karesinde içeriğin görünmesini geciktiriyordu. Yalnızca hover
+ * geçişleri var.
  */
 
 @theme {
-  --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto,
-    "Helvetica Neue", Arial, sans-serif;
+  /* next/font ile gömülür (layout.tsx) — dış istek yok, hız korunur */
+  --font-sans: var(--yazi-sans), ui-sans-serif, system-ui, "Segoe UI", Roboto, sans-serif;
+  --font-mono: var(--yazi-mono), ui-monospace, "SFMono-Regular", Menlo, monospace;
 
-  /* Yüzeyler */
-  --color-zemin: #ffffff;
-  --color-zemin-2: #fafafa;
-  --color-kenar: #e5e5e5;
-  --color-kenar-koyu: #d4d4d4;
+  --color-zemin: #070b14;
+  --color-zemin-2: #0a1020;
 
-  /* Metin */
-  --color-metin: #171717;
-  --color-metin-2: #525252;
-  --color-metin-3: #a3a3a3;
+  /* Yüzeyler saydam: zemindeki ışık halesi kartların içinden geçer */
+  --color-yuzey: rgba(255, 255, 255, 0.034);
+  --color-yuzey-2: rgba(255, 255, 255, 0.055);
+  --color-kenar: rgba(255, 255, 255, 0.085);
+  --color-kenar-parlak: rgba(255, 255, 255, 0.14);
 
-  /* Tek vurgu rengi */
-  --color-vurgu: #1d4ed8;
-  --color-vurgu-hafif: #eff6ff;
+  --color-metin: #eaeff9;
+  --color-metin-2: #98a5bd;
+  --color-metin-3: #616e88;
 
-  /* Anlam renkleri — yalnızca stok ve en uygun fiyat için */
-  --color-var: #15803d;
-  --color-var-hafif: #f0fdf4;
-  --color-yok: #b91c1c;
-  --color-yok-hafif: #fef2f2;
+  --color-mavi: #4f8bff;
+  --color-mavi-koyu: #2563eb;
+  --color-mor: #9b6bff;
+
+  --color-var: #34d399;
+  --color-yok: #fb7185;
+
+  --radius-kart: 0.875rem;
 }
 
 @layer base {
@@ -48,52 +53,61 @@
     background: var(--color-zemin);
     color: var(--color-metin);
     font-family: var(--font-sans);
-    /* Sayılar her satırda aynı genişlikte olsun — fiyat sütunları hizalı kalır */
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* Rakamlar sütunda birebir hizalansın */
+  table,
+  .rakam {
     font-variant-numeric: tabular-nums;
   }
 
-  /* Odak halkası: klavyeyle gezenler için görünür, fareyle tıklayanı rahatsız etmez */
   :focus-visible {
-    outline: 2px solid var(--color-vurgu);
+    outline: 2px solid var(--color-mavi);
     outline-offset: 2px;
-    border-radius: 4px;
+    border-radius: 6px;
   }
 }
 
 @layer components {
-  /* Kart: gölge yok, yalnızca ince kenarlık */
-  .kart {
-    border: 1px solid var(--color-kenar);
-    border-radius: 10px;
-    background: var(--color-zemin);
+  /*
+   * Tek atmosfer katmanı. Eskiden sayfaya serpiştirilmiş üç ayrı blur
+   * blob vardı; hepsi ayrı ayrı boyanıyor ve mobilde kaydırmayı
+   * ağırlaştırıyordu.
+   */
+  .hale {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    background:
+      radial-gradient(720px 340px at 12% -8%, rgba(79, 139, 255, 0.16), transparent 70%),
+      radial-gradient(620px 320px at 92% 4%, rgba(155, 107, 255, 0.11), transparent 72%);
   }
 
-  /* Tıklanabilir kart — hover'da yalnızca kenarlık koyulaşır */
-  .kart-baglanti {
+  /* Koyu temada derinlik: üst kenarda ince ışık çizgisi */
+  .yuzey {
+    background: var(--color-yuzey);
     border: 1px solid var(--color-kenar);
-    border-radius: 10px;
-    background: var(--color-zemin);
-    transition: border-color 0.12s ease, background-color 0.12s ease;
-  }
-  .kart-baglanti:hover {
-    border-color: var(--color-metin);
-    background: var(--color-zemin-2);
+    box-shadow: inset 0 1px 0 var(--color-kenar-parlak);
   }
 
-  /* Küçük etiket — stok durumu, rozet */
   .etiket {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.25rem;
-    padding: 0.125rem 0.5rem;
-    border-radius: 999px;
-    font-size: 0.75rem;
+    font-family: var(--font-mono);
+    font-size: 11px;
     font-weight: 500;
-    line-height: 1.4;
-    white-space: nowrap;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--color-metin-3);
   }
 
-  /* Yatay kaydırılan şeritlerde kaydırma çubuğunu gizle */
+  /* Gradyanın ikinci yeri — yalnızca ana sayfa başlığı */
+  .baslik-gradyan {
+    background: linear-gradient(120deg, #ffffff 20%, #b9cdff 60%, #cbb6ff 95%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+
   .kaydir-gizli {
     scrollbar-width: none;
   }
@@ -102,18 +116,30 @@
   }
 }
 
-/* Yazdırma: müşteri listeyi kâğıda döksün diye */
+/* Yazdırma: müşteri listeyi kâğıda döksün diye zemin beyaza döner */
 @media print {
-  .yazdirma-gizle {
+  .yazdirma-gizle,
+  .hale {
     display: none !important;
   }
 
   body {
     background: #fff;
+    color: #000;
   }
 
-  .kart,
-  .kart-baglanti {
+  .yuzey {
+    background: #fff;
     border-color: #ccc;
+    box-shadow: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
   }
 }

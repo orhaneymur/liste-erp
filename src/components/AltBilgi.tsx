@@ -3,13 +3,12 @@ import type { Ayarlar } from "@/lib/tipler";
 
 /** WhatsApp numarasini wa.me baglantisina cevirir */
 function whatsappLinki(numara: string): string {
-  const rakamlar = numara.replace(/\D/g, "");
-  return `https://wa.me/${rakamlar}`;
+  return `https://wa.me/${numara.replace(/\D/g, "")}`;
 }
 
 /**
  * Alt bilgi: yalnizca dolu olan iletisim kanallari gorunur.
- * Hicbiri doldurulmamissa yalnizca telif satiri kalir.
+ * Hicbiri doldurulmamissa yalnizca uyari ve telif satiri kalir.
  */
 export function AltBilgi({ ayarlar }: { ayarlar: Ayarlar }) {
   const kanallar = [
@@ -31,16 +30,16 @@ export function AltBilgi({ ayarlar }: { ayarlar: Ayarlar }) {
     <footer className="yazdirma-gizle mt-auto border-t border-kenar">
       <div className="mx-auto w-full max-w-5xl px-4 py-8 sm:px-6">
         {kanallar.length > 0 && (
-          <div className="mb-5 flex flex-wrap gap-x-6 gap-y-2.5">
+          <div className="mb-5 flex flex-wrap gap-x-6 gap-y-3">
             {kanallar.map(({ Ikon, metin, href }) => {
               const icerik = (
-                <span className="flex items-center gap-2 text-sm text-metin-2">
+                <span className="flex items-center gap-2 text-sm text-metin-2 transition hover:text-metin">
                   <Ikon className="size-4 shrink-0 text-metin-3" strokeWidth={1.75} />
                   {metin}
                 </span>
               );
               return href ? (
-                <a key={metin} href={href} className="transition hover:text-metin">
+                <a key={metin} href={href}>
                   {icerik}
                 </a>
               ) : (
@@ -50,7 +49,7 @@ export function AltBilgi({ ayarlar }: { ayarlar: Ayarlar }) {
           </div>
         )}
 
-        <p className="max-w-2xl text-xs leading-relaxed text-metin-3">{ayarlar.uyariMetni}</p>
+        <p className="max-w-[62ch] text-xs leading-relaxed text-metin-3">{ayarlar.uyariMetni}</p>
 
         <p className="mt-4 text-xs text-metin-3">
           © {new Date().getFullYear()} {ayarlar.firmaAdi}

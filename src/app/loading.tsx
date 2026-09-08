@@ -2,11 +2,11 @@
 export default function Yukleniyor() {
   return (
     <div className="animate-pulse">
-      <div className="mb-6 h-8 w-56 rounded bg-zemin-2" />
-      <div className="mb-2 h-4 w-72 rounded bg-zemin-2" />
-      <div className="mt-8 grid grid-cols-1 gap-2 sm:grid-cols-2">
+      <div className="mb-3 h-3 w-24 rounded bg-yuzey-2" />
+      <div className="mb-8 h-8 w-64 rounded bg-yuzey-2" />
+      <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2">
         {Array.from({ length: 6 }).map((_, i) => (
-          <div key={i} className="h-16 rounded-[10px] border border-kenar" />
+          <div key={i} className="yuzey h-[76px] rounded-kart" />
         ))}
       </div>
     </div>

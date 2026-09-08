@@ -21,33 +21,41 @@ export default async function MarkaSayfasi({ params }: Parametreler) {
   if (!ad) notFound();
 
   const liste = await kategoriler(marka);
+  const toplamCesit = liste.reduce((t, k) => t + k.urunSayisi, 0);
 
   return (
     <div>
       <AdimCubugu adimlar={[{ etiket: ad, href: `/marka/${marka}` }]} />
 
-      <header className="mb-6 flex items-center gap-3">
-        <span className="flex size-10 shrink-0 items-center justify-center">
+      <header className="mb-6 flex items-center gap-4">
+        <span className="flex size-14 shrink-0 items-center justify-center rounded-xl bg-white/90 p-2.5">
           <MarkaLogosu marka={ad} />
         </span>
         <div>
-          <h1 className="text-xl font-semibold tracking-tight text-metin">{ad}</h1>
-          <p className="text-sm text-metin-3">Parça türü seçin</p>
+          <p className="etiket">Parça türü</p>
+          <h1 className="mt-1 text-2xl font-semibold tracking-tight text-metin">{ad}</h1>
+          <p className="mt-0.5 text-sm text-metin-3">
+            {liste.length} parça türü · {toplamCesit} çeşit
+          </p>
         </div>
       </header>
 
-      <ul className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+      <ul className="grid grid-cols-1 gap-2.5 sm:grid-cols-2">
         {liste.map((kategori) => {
-          const { Ikon } = kategoriGorunumu(kategori.ad);
+          const { Ikon, renk } = kategoriGorunumu(kategori.ad);
           return (
             <li key={kategori.slug}>
               <Link
                 href={`/marka/${marka}/${kategori.slug}`}
-                className="kart-baglanti flex items-center gap-3 p-3.5"
+                className="yuzey flex items-center gap-4 rounded-kart p-4 transition duration-150 hover:border-mavi/45 hover:bg-yuzey-2"
               >
-                <Ikon className="size-5 shrink-0 text-metin-2" strokeWidth={1.5} />
+                <span
+                  className={`flex size-12 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br ${renk}`}
+                >
+                  <Ikon className="size-6 text-white" strokeWidth={1.7} />
+                </span>
                 <span className="min-w-0 flex-1">
-                  <span className="block truncate text-sm font-medium text-metin">
+                  <span className="block truncate text-[14.5px] font-medium text-metin">
                     {kategori.ad}
                   </span>
                   <span className="block text-xs text-metin-3">
