@@ -8,4 +8,4 @@ version: 1.0.0
 
 # Varsayılan uygulama sürümü. values.yaml içindeki image.tag bunu ezer.
 # k8s/build-images.sh bu satırı imaj etiketiyle eşitler.
-appVersion: "v1.4.0"
+appVersion: "v1.5.0"

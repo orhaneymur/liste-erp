@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import Link from "next/link";
 import { Check, Copy } from "lucide-react";
 import { PARA_SEMBOLU, paraBicimle, tlKarsiligi } from "@/lib/bicim";
 import type { Ayarlar, FiyatSatiri } from "@/lib/tipler";
@@ -20,6 +21,10 @@ import type { Ayarlar, FiyatSatiri } from "@/lib/tipler";
  * STOKTA OLMAYANIN FIYATI GOSTERILMEZ (karar 8 Eylul 2026): satir listede
  * kalir — musteri parcanin var oldugunu bilsin — ama fiyat yerine cizgi
  * durur ve satir listenin sonuna duser. Kopyalanan metne de fiyatsiz gecer.
+ *
+ * Uyumlu model rozetleri TIKLANABILIR (10 Eylul 2026): yol erp.ts'te
+ * onceden cozulur (uyumluCoz). Listede olmayan model gri kalir ve
+ * baglanti almaz — tiklayinca bos sayfa acilmasin.
  */
 
 type Siralama = "ucuz" | "pahali" | "ad";
@@ -239,23 +244,30 @@ export function FiyatTablosu({
                      * musterinin musterisi bunu satirda gorsun — aksi halde
                      * "bu benim modelime uyar mi" diye sormak zorunda kaliyor.
                      */}
-                    {satir.uyumlu && (
+                    {satir.uyumluBaglantilar && (
                       <span className="mt-1.5 flex flex-wrap items-center gap-1">
                         <span className="text-[10px] uppercase tracking-wide text-metin-3">
                           uyumlu
                         </span>
-                        {satir.uyumlu.split(',').map((model) => {
-                          const temiz = model.trim();
-                          if (!temiz) return null;
-                          return (
-                            <span
-                              key={temiz}
-                              className="rounded bg-yuzey px-1.5 py-0.5 text-[10.5px] text-metin-2"
+                        {satir.uyumluBaglantilar.map(({ ad, yol }) =>
+                          yol ? (
+                            <Link
+                              key={ad}
+                              href={yol}
+                              className="rounded border border-kenar bg-yuzey px-1.5 py-0.5 text-[10.5px] text-metin-2 transition hover:border-mavi/50 hover:bg-mavi/12 hover:text-[#bcd3ff]"
                             >
-                              {temiz}
+                              {ad}
+                            </Link>
+                          ) : (
+                            /* Listede olmayan model: yazi olarak durur */
+                            <span
+                              key={ad}
+                              className="rounded bg-yuzey px-1.5 py-0.5 text-[10.5px] text-metin-3"
+                            >
+                              {ad}
                             </span>
-                          );
-                        })}
+                          ),
+                        )}
                       </span>
                     )}
                     {satir.not && (

@@ -24,6 +24,7 @@ import type {
   MarkaOzeti,
   ModelOzeti,
   Urun,
+  UyumluBaglanti,
 } from "./tipler";
 import { sadeMetin, slugla, temizle } from "./slug";
 import { logoYolu } from "./logolar";
@@ -131,6 +132,60 @@ function rozetGerekliMi(u: ApiUrun): string | undefined {
   }
 
   return parcalar.length > 0 ? parcalar.join(" · ") : undefined;
+}
+
+/**
+ * Muadil model adlarini SAYFA YOLUNA cevirir.
+ *
+ * Musteri "bu parca su modele de uyuyor" yazisini gorunce dogal olarak
+ * uzerine basiyor. Rozet duz yaziyken hicbir sey olmuyordu; artik o
+ * modelin fiyat sayfasina gidiyor.
+ *
+ * Hedef secimi — sirasiyla:
+ *   1. ayni marka + ayni parca turu  (ekran ariyorsa yine ekran acilsin)
+ *   2. ayni marka, herhangi bir tur  (o markada o tur yoksa)
+ *   3. baska markadaki ayni model    (nadiren; muadil marka asiyorsa)
+ *   4. hicbiri  -> baglanti verilmez, rozet yazi olarak kalir
+ *
+ * Urunun KENDI modeli listeden atilir: Excel'de cogu satir kendi
+ * modelini de uyumlu sutununa yaziyor, kendine baglanti anlamsiz.
+ */
+function uyumluCoz(
+  metin: string | undefined,
+  markaSlug: string,
+  kategoriSlug: string,
+  modelSlug: string,
+  modelYollari: Map<string, { markaSlug: string; kategoriSlug: string }[]>,
+): UyumluBaglanti[] | undefined {
+  if (!metin) return undefined;
+
+  const cikti: UyumluBaglanti[] = [];
+  const gorulen = new Set<string>();
+
+  for (const ham of metin.split(",")) {
+    const ad = temizle(ham);
+    if (!ad) continue;
+
+    const slug = slugla(ad);
+    if (!slug || slug === modelSlug) continue;
+    if (gorulen.has(slug)) continue;
+    gorulen.add(slug);
+
+    const adaylar = modelYollari.get(slug);
+    let yol: string | null = null;
+
+    if (adaylar && adaylar.length > 0) {
+      const secim =
+        adaylar.find((a) => a.markaSlug === markaSlug && a.kategoriSlug === kategoriSlug) ??
+        adaylar.find((a) => a.markaSlug === markaSlug) ??
+        adaylar[0];
+      yol = `/marka/${secim.markaSlug}/${secim.kategoriSlug}/${slug}`;
+    }
+
+    cikti.push({ ad, yol });
+  }
+
+  return cikti.length > 0 ? cikti : undefined;
 }
 
 function fiyatAraligi(urunler: Urun[]): { enUcuz: number | null; enPahali: number | null } {
@@ -286,6 +341,19 @@ function indeksKur(kayitlar: ApiUrun[], guncellenme: string | null): Liste {
     else a.katHarita.set(u.kategoriSlug, { ad: u.kategori, adet: 1 });
   }
 
+  /*
+   * Model slug'indan sayfa yoluna. Uyumlu model rozetlerini
+   * tiklanabilir yapmak icin gerekiyor; bir kez kurulur, satir basina
+   * tarama yapilmaz.
+   */
+  const modelYollari = new Map<string, { markaSlug: string; kategoriSlug: string }[]>();
+  for (const anahtar of modelKutu.keys()) {
+    const [markaSlug, kategoriSlug, modelSlug] = anahtar.split("/");
+    const dizi = modelYollari.get(modelSlug);
+    if (dizi) dizi.push({ markaSlug, kategoriSlug });
+    else modelYollari.set(modelSlug, [{ markaSlug, kategoriSlug }]);
+  }
+
   /* --- ozetleri uret --- */
   const markaAdi = new Map<string, string>();
   const markalar: MarkaOzeti[] = [];
@@ -334,7 +402,17 @@ function indeksKur(kayitlar: ApiUrun[], guncellenme: string | null): Liste {
       anahtar,
       [...liste]
         .sort((a, b) => (b.toptan ?? 0) - (a.toptan ?? 0) || a.sira - b.sira)
-        .map((u) => ({ ...u, enUcuzMu: (u.toptan ?? u.perakende) === enUcuz })),
+        .map((u) => ({
+          ...u,
+          enUcuzMu: (u.toptan ?? u.perakende) === enUcuz,
+          uyumluBaglantilar: uyumluCoz(
+            u.uyumlu,
+            markaSlug,
+            kategoriSlug,
+            modelSlug,
+            modelYollari,
+          ),
+        })),
     );
   }
   for (const dizi of modeller.values()) {

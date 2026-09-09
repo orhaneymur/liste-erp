@@ -1,10 +1,6 @@
 import { Mail, MapPin, MessageCircle, Phone } from "lucide-react";
+import { whatsappLinki } from "@/lib/bicim";
 import type { Ayarlar } from "@/lib/tipler";
-
-/** WhatsApp numarasini wa.me baglantisina cevirir */
-function whatsappLinki(numara: string): string {
-  return `https://wa.me/${numara.replace(/\D/g, "")}`;
-}
 
 /**
  * Alt bilgi: yalnizca dolu olan iletisim kanallari gorunur.
@@ -28,7 +24,7 @@ export function AltBilgi({ ayarlar }: { ayarlar: Ayarlar }) {
 
   return (
     <footer className="yazdirma-gizle mt-auto border-t border-kenar">
-      <div className="mx-auto w-full max-w-5xl px-4 py-8 sm:px-6">
+      <div className="mx-auto w-full max-w-5xl px-4 pb-24 pt-8 sm:px-6 sm:pb-8">
         {kanallar.length > 0 && (
           <div className="mb-5 flex flex-wrap gap-x-6 gap-y-3">
             {kanallar.map(({ Ikon, metin, href }) => {

@@ -3,6 +3,7 @@ import { IBM_Plex_Mono, IBM_Plex_Sans } from "next/font/google";
 import "./globals.css";
 import { UstBar } from "@/components/UstBar";
 import { AltBilgi } from "@/components/AltBilgi";
+import { WhatsappDugmesi } from "@/components/WhatsappDugmesi";
 import { ayarlarOku } from "@/lib/veri";
 
 /*
@@ -73,6 +74,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
           </main>
           <AltBilgi ayarlar={ayarlar} />
         </div>
+        <WhatsappDugmesi numara={ayarlar.whatsapp} />
       </body>
     </html>
   );

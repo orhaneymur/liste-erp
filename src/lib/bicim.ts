@@ -79,3 +79,15 @@ export function gecenSure(iso: string | null | undefined): string {
   if (gun < 30) return `${gun} gün önce`;
   return `${Math.floor(gun / 30)} ay önce`;
 }
+
+/**
+ * WhatsApp numarasini wa.me baglantisina cevirir.
+ * "+90 530 889 34 00" -> "https://wa.me/905308893400"
+ *
+ * wa.me yalnizca rakam kabul eder; bosluk, tire ve arti isareti
+ * atilir. Numara ulke kodsuz girilirse baglanti calismaz — ayar
+ * dosyasinda ulke koduyla yazilmasi gerekir.
+ */
+export function whatsappLinki(numara: string): string {
+  return `https://wa.me/${numara.replace(/\D/g, "")}`;
+}

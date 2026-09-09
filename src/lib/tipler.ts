@@ -111,7 +111,21 @@ export interface ModelOzeti {
   paraBirimi: ParaBirimi;
 }
 
+/**
+ * Satirdaki tiklanabilir muadil model rozeti.
+ *
+ * yol null ise o model listede YOK (ERP'de karti acilmamis veya adi
+ * tutmuyor): rozet yazi olarak durur, baglanti verilmez — tiklayinca
+ * bos sayfa acilmasin.
+ */
+export interface UyumluBaglanti {
+  ad: string;
+  yol: string | null;
+}
+
 export interface FiyatSatiri extends Urun {
   /** Ayni model+kategori icindeki en ucuz secenek mi */
   enUcuzMu: boolean;
+  /** Muadil modeller, sayfa yollari cozulmus halde */
+  uyumluBaglantilar?: UyumluBaglanti[];
 }
