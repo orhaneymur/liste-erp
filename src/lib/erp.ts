@@ -25,7 +25,7 @@ import type {
   ModelOzeti,
   Urun,
 } from "./tipler";
-import { slugla, temizle } from "./slug";
+import { sadeMetin, slugla, temizle } from "./slug";
 import { logoYolu } from "./logolar";
 
 const ERP_TABAN = process.env.ERP_API_URL?.trim() || "http://teknikerp-backend:3000";
@@ -91,6 +91,7 @@ const trSirala = (a: string, b: string) => a.localeCompare(b, "tr");
  * birlesir. Birlestirmezsek ayni modelin siyah ve kirmizi arka kapagi
  * listede iki kez ayni adla gorunur.
  */
+/** Stok adi bos gelirse kullanilan yedek: kalite / gorunum / renk */
 function satirAdi(u: ApiUrun): string {
   const parcalar: string[] = [];
   for (const deger of [u.kalite, u.gorunum, u.renk]) {
@@ -109,6 +110,29 @@ function satirAdi(u: ApiUrun): string {
  * gosterilmiyor. Gosterilmeyen bir fiyat "en uygun" secilemez, aksi
  * halde tabloda fiyati gizli bir satir en uygun isaretlenirdi.
  */
+/**
+ * Rozet yalnizca stok adinda GECMEYEN kalite bilgisi icin.
+ *
+ * Stok adi zaten "... CITASIZ BLACK" iceriyorsa ayni bilgiyi ikinci kez
+ * yazmak satiri uzatir. Ama "A Kalite" / "Servis Orjinal" gibi degerler
+ * stok adinda cogu zaman gecmiyor ve musterinin musterisi asil onu
+ * karsilastiriyor — o durumda rozet olarak gosterilir.
+ */
+function rozetGerekliMi(u: ApiUrun): string | undefined {
+  const adSade = sadeMetin(u.ad);
+  const parcalar: string[] = [];
+
+  for (const deger of [u.kalite, u.gorunum, u.renk]) {
+    const temizDeger = temizle(deger);
+    if (!temizDeger) continue;
+    if (adSade.includes(sadeMetin(temizDeger))) continue;
+    if (parcalar.some((v) => sadeMetin(v) === sadeMetin(temizDeger))) continue;
+    parcalar.push(temizDeger);
+  }
+
+  return parcalar.length > 0 ? parcalar.join(" · ") : undefined;
+}
+
 function fiyatAraligi(urunler: Urun[]): { enUcuz: number | null; enPahali: number | null } {
   let enUcuz: number | null = null;
   let enPahali: number | null = null;
@@ -158,7 +182,10 @@ function indeksKur(kayitlar: ApiUrun[], guncellenme: string | null): Liste {
       markaSlug: slugla(marka),
       kategoriSlug: slugla(kategori),
       modelSlug: slugla(model),
-      kalite: satirAdi(u),
+      // Satir adi ERP'deki stok adi; bossa eski kalite birlesimine duser
+      kalite: temizle(u.ad) || satirAdi(u),
+      kaliteRozeti: rozetGerekliMi(u),
+      uyumlu: temizle(u.uyumlu) || undefined,
       stokKodu: temizle(u.kod) || undefined,
       toptan: u.toptan,
       perakende: u.perakende,

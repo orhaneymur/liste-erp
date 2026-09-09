@@ -213,6 +213,16 @@ export function FiyatTablosu({
                     )}
                     <span className="flex flex-wrap items-center gap-x-2 gap-y-1">
                       <span className="text-[14.5px] font-medium text-metin">{satir.kalite}</span>
+                      {/*
+                       * Kalite rozeti yalnizca stok adinda GECMEYEN bilgi icin
+                       * ("A Kalite", "Servis Orjinal"). Stok adi zaten
+                       * "... CITASIZ BLACK" iceriyorsa tekrar yazilmaz.
+                       */}
+                      {satir.kaliteRozeti && (
+                        <span className="rounded border border-kenar bg-yuzey px-1.5 py-0.5 text-[10px] font-medium text-metin-2">
+                          {satir.kaliteRozeti}
+                        </span>
+                      )}
                       {enUygun && (
                         <span className="etiket rounded border border-mavi/30 bg-mavi/15 px-1.5 py-0.5 text-[9.5px] text-[#bcd3ff]">
                           en uygun
@@ -222,6 +232,30 @@ export function FiyatTablosu({
                     {satir.stokKodu && (
                       <span className="mt-1 block font-mono text-[11.5px] text-metin-3">
                         {satir.stokKodu}
+                      </span>
+                    )}
+                    {/*
+                     * Muadil modeller: ayni parca baska modellere de uyuyorsa
+                     * musterinin musterisi bunu satirda gorsun — aksi halde
+                     * "bu benim modelime uyar mi" diye sormak zorunda kaliyor.
+                     */}
+                    {satir.uyumlu && (
+                      <span className="mt-1.5 flex flex-wrap items-center gap-1">
+                        <span className="text-[10px] uppercase tracking-wide text-metin-3">
+                          uyumlu
+                        </span>
+                        {satir.uyumlu.split(',').map((model) => {
+                          const temiz = model.trim();
+                          if (!temiz) return null;
+                          return (
+                            <span
+                              key={temiz}
+                              className="rounded bg-yuzey px-1.5 py-0.5 text-[10.5px] text-metin-2"
+                            >
+                              {temiz}
+                            </span>
+                          );
+                        })}
                       </span>
                     )}
                     {satir.not && (

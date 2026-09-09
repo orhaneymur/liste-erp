@@ -6,6 +6,8 @@
 
 /** GET /api/public/fiyat-listesi -> urunler[] */
 export interface ApiUrun {
+  /** ERP'deki stok adi — satirin gorunen adi bu olur */
+  ad: string;
   marka: string;
   kategori: string;
   model: string;
@@ -13,6 +15,8 @@ export interface ApiUrun {
   gorunum: string;
   renk: string;
   kod: string;
+  /** Muadil model adlari, virgulle ayrilmis */
+  uyumlu: string;
   toptan: number | null;
   perakende: number | null;
   /** ERP adet vermez; yalnizca satilabilir stok var mi */
@@ -37,8 +41,15 @@ export interface Urun {
   marka: string;
   kategori: string;
   model: string;
-  /** Kalite / cesit adi. Orn: "Servis Orijinal", "OLED Hard", "A Kalite TFT" */
+  /**
+   * Satirin gorunen adi — ERP'deki STOK ADI.
+   * (Alan adi 'kalite' kaldi: bilesenler bu adla okuyor.)
+   */
   kalite: string;
+  /** Kalite/gorunum/renk birlesimi; stok adinda gecmiyorsa rozet olur */
+  kaliteRozeti?: string;
+  /** Muadil model adlari, virgulle ayrilmis */
+  uyumlu?: string;
   stokKodu?: string;
   toptan: number | null;
   perakende: number | null;
