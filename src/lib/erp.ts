@@ -241,6 +241,7 @@ function indeksKur(kayitlar: ApiUrun[], guncellenme: string | null): Liste {
       kalite: temizle(u.ad) || satirAdi(u),
       kaliteRozeti: rozetGerekliMi(u),
       uyumlu: temizle(u.uyumlu) || undefined,
+      aciklama: temizle(u.aciklama) || undefined,
       stokKodu: temizle(u.kod) || undefined,
       toptan: u.toptan,
       perakende: u.perakende,

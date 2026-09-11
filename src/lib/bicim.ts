@@ -89,5 +89,29 @@ export function gecenSure(iso: string | null | undefined): string {
  * dosyasinda ulke koduyla yazilmasi gerekir.
  */
 export function whatsappLinki(numara: string): string {
-  return `https://wa.me/${numara.replace(/\D/g, "")}`;
+  const rakamlar = numara.replace(/\D/g, "");
+
+  /*
+   * Ulke kodu normallestirmesi (11 Eylul 2026).
+   *
+   * wa.me ULKE KODU ister ve bastaki sifiri kabul etmez: "05494974747"
+   * verilirse baglanti sessizce calismaz — tiklayan kisi bos bir ekran
+   * gorur. Ayari giren kisinin bunu bilmesini beklemek yerine yaygin uc
+   * bicimi burada duzeltiyoruz.
+   *
+   *   00905494974747 -> 905494974747   (uluslararasi cikis kodu)
+   *   05494974747    -> 905494974747   (yerel bicim, bastaki sifir)
+   *   5494974747     -> 905494974747   (sifirsiz, 10 hane)
+   *
+   * Bunlarin disindaki numaralara DOKUNULMAZ: yabanci bir musteri kendi
+   * ulke koduyla girdiginde bozmayalim.
+   */
+  if (rakamlar.startsWith("00")) return `https://wa.me/${rakamlar.slice(2)}`;
+  if (rakamlar.length === 11 && rakamlar.startsWith("0")) {
+    return `https://wa.me/90${rakamlar.slice(1)}`;
+  }
+  if (rakamlar.length === 10 && rakamlar.startsWith("5")) {
+    return `https://wa.me/90${rakamlar}`;
+  }
+  return `https://wa.me/${rakamlar}`;
 }

@@ -234,9 +234,19 @@ export function FiyatTablosu({
                         </span>
                       )}
                     </span>
-                    {satir.stokKodu && (
-                      <span className="mt-1 block font-mono text-[11.5px] text-metin-3">
-                        {satir.stokKodu}
+                    {/*
+                     * ACIKLAMA — stok kodunun yerini aldi (musteri karari,
+                     * 11 Eylul 2026). Stok kodu musterinin musterisine bir
+                     * sey anlatmiyordu; aciklama anlatiyor.
+                     *
+                     * Aciklamasi olmayan urunde satir HIC CIZILMEZ; stok
+                     * kodu da yazilmaz, bosluk da kalmaz.
+                     *
+                     * Mono yazi tipi kaldirildi: kod degil, duz metin.
+                     */}
+                    {satir.aciklama && (
+                      <span className="mt-1 block text-[11.5px] leading-snug text-metin-3">
+                        {satir.aciklama}
                       </span>
                     )}
                     {/*

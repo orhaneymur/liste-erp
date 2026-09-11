@@ -14,6 +14,8 @@ export interface ApiUrun {
   kalite: string;
   gorunum: string;
   renk: string;
+  /** ERP'deki "Aciklama" sutunu; bos olabilir */
+  aciklama: string;
   kod: string;
   /** Muadil model adlari, virgulle ayrilmis */
   uyumlu: string;
@@ -50,6 +52,15 @@ export interface Urun {
   kaliteRozeti?: string;
   /** Muadil model adlari, virgulle ayrilmis */
   uyumlu?: string;
+  /**
+   * Urun aciklamasi — listede stok kodunun YERINDE gosterilir
+   * (musteri karari, 11 Eylul 2026). Bos ise satirda hic bir sey yazmaz.
+   */
+  aciklama?: string;
+  /**
+   * Stok kodu. ARTIK GOSTERILMIYOR; satir anahtari olarak duruyor
+   * (FiyatTablosu'ndaki key).
+   */
   stokKodu?: string;
   toptan: number | null;
   perakende: number | null;
