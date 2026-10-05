@@ -63,6 +63,16 @@ image:
   tag: "v1.0.0"
   pullPolicy: IfNotPresent
 
+# ── Bakım sayfası ──────────────────────────────────────────────────────────
+# true iken site "Güncelleniyor" sayfası gösterir (templates/bakim.yaml).
+# Uygulama arkada çalışmaya devam eder; false yapınca liste anında döner.
+# Sayfada tenant.whatsapp ve tenant.telefon varsa iletişim düğmeleri çıkar.
+bakim:
+  aktif: false
+  baslik: ""   # boşsa: "Fiyat listemizi güncelliyoruz"
+  mesaj: ""    # boşsa hazır metin
+  image: "nginx:1.27-alpine"
+
 # ── Uygulama ───────────────────────────────────────────────────────────────
 replicas: 1
 

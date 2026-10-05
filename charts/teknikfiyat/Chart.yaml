@@ -4,7 +4,7 @@ description: Fiyat Listesi — ERP'nin yanında kurulan, müşterinin kendi mü�
 type: application
 
 # Chart sürümü — chart dosyalarını her değiştirdiğinde artır.
-version: 1.0.0
+version: 1.1.0
 
 # Varsayılan uygulama sürümü. values.yaml içindeki image.tag bunu ezer.
 # k8s/build-images.sh bu satırı imaj etiketiyle eşitler.

@@ -1,0 +1,136 @@
+{{/*
+Bakım sayfası — "Güncelleniyor".
+
+bakim.aktif: true iken alan adı uygulamaya değil, sabit bir HTML sayfası
+sunan küçük bir nginx'e yönlenir (ingress.yaml). Uygulamanın kendisi
+ÇALIŞMAYA DEVAM EDER; bakım kapatılınca site anında geri gelir, imaj
+derlemeye gerek yoktur:
+
+  helm upgrade teknikfiyat charts/teknikfiyat -n tenant-shenzhen --reuse-values --set bakim.aktif=true
+  helm upgrade teknikfiyat charts/teknikfiyat -n tenant-shenzhen --reuse-values --set bakim.aktif=false
+
+--reuse-values eski kurulumun değerlerini taşır, chart'a sonradan
+eklenen varsayılanları TAŞIMAZ. Bu yüzden buradaki her alan "default"
+ile okunur; "bakim" anahtarı hiç yokken de şablon çalışır.
+
+Sayfa no-store ile döner: bakım kapanınca Cloudflare'de veya tarayıcıda
+eski "güncelleniyor" sayfası takılı kalmasın.
+*/}}
+{{- $bakim := .Values.bakim | default dict -}}
+{{- if $bakim.aktif -}}
+{{- $firma := .Values.tenant.firmaAdi | default "" | toString | replace "&" "&amp;" | replace "<" "&lt;" | replace ">" "&gt;" -}}
+{{- $baslik := $bakim.baslik | default "Fiyat listemizi güncelliyoruz" | toString | replace "&" "&amp;" | replace "<" "&lt;" | replace ">" "&gt;" -}}
+{{- $mesaj := $bakim.mesaj | default "Daha iyi bir liste için kısa bir ara verdik, çok yakında yeniden yayındayız. Bu sürede fiyat ve sipariş için bize ulaşabilirsiniz." | toString | replace "&" "&amp;" | replace "<" "&lt;" | replace ">" "&gt;" -}}
+{{- /* WhatsApp numarası — src/lib/bicim.ts whatsappLinki ile aynı kural */ -}}
+{{- $wa := regexReplaceAll "[^0-9]" (.Values.tenant.whatsapp | default "" | toString) "" -}}
+{{- if hasPrefix "00" $wa -}}
+{{- $wa = trimPrefix "00" $wa -}}
+{{- else if and (eq (len $wa) 11) (hasPrefix "0" $wa) -}}
+{{- $wa = printf "90%s" (substr 1 11 $wa) -}}
+{{- else if and (eq (len $wa) 10) (hasPrefix "5" $wa) -}}
+{{- $wa = printf "90%s" $wa -}}
+{{- end -}}
+{{- $tel := .Values.tenant.telefon | default "" | toString -}}
+{{- $iletisim := "" -}}
+{{- if or $wa $tel -}}
+{{- $iletisim = "<div class=\"iletisim\">" -}}
+{{- if $wa -}}
+{{- $iletisim = printf "%s<a class=\"wa\" href=\"https://wa.me/%s\" target=\"_blank\" rel=\"noopener noreferrer\">%s WhatsApp ile yazın</a>" $iletisim $wa (.Files.Get "files/whatsapp.svg" | trim) -}}
+{{- end -}}
+{{- if $tel -}}
+{{- $iletisim = printf "%s<a class=\"tel\" href=\"tel:%s\">%s</a>" $iletisim (regexReplaceAll "[^0-9+]" $tel "") ($tel | replace "&" "&amp;" | replace "<" "&lt;" | replace ">" "&gt;") -}}
+{{- end -}}
+{{- $iletisim = printf "%s</div>" $iletisim -}}
+{{- end -}}
+{{- $html := .Files.Get "files/bakim.html" | replace "__FIRMA__" $firma | replace "__BASLIK__" $baslik | replace "__MESAJ__" $mesaj | replace "__ILETISIM__" $iletisim }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: teknikfiyat-bakim
+  labels:
+    {{- include "teknikfiyat.labels" . | nindent 4 }}
+data:
+  index.html: |
+    {{- $html | nindent 4 }}
+  default.conf: |
+    server {
+      listen 8080;
+      server_tokens off;
+      charset utf-8;
+      root /usr/share/nginx/html;
+      # Her adres (/marka/..., /favicon.ico) aynı sayfayı döndürür.
+      location / {
+        default_type text/html;
+        add_header Cache-Control "no-store" always;
+        try_files /index.html =404;
+      }
+    }
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: teknikfiyat-bakim
+  labels:
+    app: teknikfiyat-bakim
+    {{- include "teknikfiyat.labels" . | nindent 4 }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: teknikfiyat-bakim
+  template:
+    metadata:
+      labels:
+        app: teknikfiyat-bakim
+      annotations:
+        # subPath ile bağlanan dosya ConfigMap değişince tazelenmez;
+        # metin değişirse pod yeniden başlasın.
+        checksum/sayfa: {{ $html | sha256sum }}
+    spec:
+      containers:
+        - name: nginx
+          image: {{ $bakim.image | default "nginx:1.27-alpine" }}
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: http
+              containerPort: 8080
+          volumeMounts:
+            - name: sayfa
+              mountPath: /usr/share/nginx/html/index.html
+              subPath: index.html
+            - name: sayfa
+              mountPath: /etc/nginx/conf.d/default.conf
+              subPath: default.conf
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 8080
+            periodSeconds: 5
+          resources:
+            requests:
+              memory: 8Mi
+              cpu: 5m
+            limits:
+              memory: 32Mi
+              cpu: 100m
+      volumes:
+        - name: sayfa
+          configMap:
+            name: teknikfiyat-bakim
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: teknikfiyat-bakim
+  labels:
+    app: teknikfiyat-bakim
+    {{- include "teknikfiyat.labels" . | nindent 4 }}
+spec:
+  type: ClusterIP
+  selector:
+    app: teknikfiyat-bakim
+  ports:
+    - name: http
+      port: 80
+      targetPort: 8080
+{{- end }}
